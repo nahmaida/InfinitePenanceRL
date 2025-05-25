@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InfinitePenanceRL", "InfinitePenanceRL\InfinitePenanceRL.csproj", "{197E5E06-06EB-46A3-A749-6D4B3528DECD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{197E5E06-06EB-46A3-A749-6D4B3528DECD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{197E5E06-06EB-46A3-A749-6D4B3528DECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{197E5E06-06EB-46A3-A749-6D4B3528DECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{197E5E06-06EB-46A3-A749-6D4B3528DECD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {81080C5F-1AD2-4245-AF64-3B30278CFF6A}
+	EndGlobalSection
+EndGlobal
