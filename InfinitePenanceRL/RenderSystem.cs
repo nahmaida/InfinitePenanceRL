@@ -5,8 +5,14 @@ namespace InfinitePenanceRL
 {
     public class RenderSystem
     {
-        public void Render(Graphics g, IEnumerable<Entity> entities)
+        public void Render(Graphics g, GameEngine game, IEnumerable<Entity> entities)
         {
+            // Черный фон
+            g.Clear(Color.Black);
+
+            // Фиксируем в границах экрана
+            g.SetClip(new Rectangle(Point.Empty, game.Camera.ViewportSize));
+
             foreach (var entity in entities)
             {
                 var render = entity.GetComponent<RenderComponent>();
@@ -17,7 +23,7 @@ namespace InfinitePenanceRL
                         screenPos.X, screenPos.Y,
                         render.Size.Width, render.Size.Height);
 
-                    // Тестовые стены
+                    // Рисуем коллайдеры (можно потом убрать)
                     var collider = entity.GetComponent<ColliderComponent>();
                     if (collider != null)
                     {
@@ -32,6 +38,7 @@ namespace InfinitePenanceRL
                     }
                 }
             }
+            g.ResetClip();
         }
     }
 }

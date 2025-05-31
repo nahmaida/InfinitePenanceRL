@@ -13,12 +13,12 @@ namespace InfinitePenanceRL
 
         public Camera Camera { get; } = new Camera();
         public PhysicsSystem Physics { get; } = new PhysicsSystem();
-        public Size WorldSize { get; set; } = new Size(2000, 2000); // Размер мира
+        public Size WorldSize { get; set; } = new Size(4000, 4000); // Размер мира
 
-        public void Initialize()
+        public void Initialize(Size initialViewportSize)
         {
             CurrentScene = new Scene(this);
-            Camera.ViewportSize = new Size(800, 600); // Должно быть как размер формы
+            Camera.ViewportSize = initialViewportSize;
 
             var player = EntityFactory.CreatePlayer(this);
             CurrentScene.AddEntity(player);
@@ -55,7 +55,7 @@ namespace InfinitePenanceRL
             graphics.Clear(Color.Black);
             if (CurrentScene != null)
             {
-                RenderSystem.Render(graphics, CurrentScene.Entities);
+                RenderSystem.Render(graphics, this, CurrentScene.Entities);
             }
         }
     }

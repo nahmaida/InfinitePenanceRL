@@ -21,7 +21,7 @@ namespace InfinitePenanceRL
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            _engine.Initialize();
+            _engine.Initialize(this.ClientSize);
 
             _gameTimer = new System.Windows.Forms.Timer
             {
@@ -41,6 +41,24 @@ namespace InfinitePenanceRL
         {
             base.OnPaint(e);
             _engine.Render(e.Graphics);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            if (_engine != null && _engine.Camera != null)
+            {
+                // Обновляем камеру когда меняем размер окна
+                _engine.Camera.ViewportSize = this.ClientSize;
+
+                // Центрируем на игроке
+                var player = _engine.CurrentScene?.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+                if (player != null)
+                {
+                    _engine.Camera.CenterOn(player.Position, _engine.WorldSize);
+                }
+            }
         }
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
