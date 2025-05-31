@@ -11,15 +11,28 @@ namespace InfinitePenanceRL
         public Scene CurrentScene { get; private set; }
         public RenderSystem RenderSystem { get; } = new RenderSystem();
 
+        public Camera Camera { get; } = new Camera();
+        public PhysicsSystem Physics { get; } = new PhysicsSystem();
+        public Size WorldSize { get; set; } = new Size(2000, 2000); // Размер мира
+
         public void Initialize()
         {
             CurrentScene = new Scene(this);
-            CurrentScene.AddEntity(EntityFactory.CreatePlayer(this));
+            Camera.ViewportSize = new Size(800, 600); // Должно быть как размер формы
+
+            var player = EntityFactory.CreatePlayer(this);
+            CurrentScene.AddEntity(player);
+
+            // Тестовые стены
+            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 300, 200, 50, 200));
+            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 500, 400, 200, 50));
         }
 
         public void Update()
         {
             if (State != GameState.Playing) return;
+
+            Physics.Update(CurrentScene);
 
             foreach (var entity in CurrentScene.Entities)
             {
@@ -27,6 +40,13 @@ namespace InfinitePenanceRL
                 {
                     component.Update();
                 }
+            }
+
+            // Камера следует за игроком
+            var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+            if (player != null)
+            {
+                Camera.CenterOn(player.Position, WorldSize);
             }
         }
 

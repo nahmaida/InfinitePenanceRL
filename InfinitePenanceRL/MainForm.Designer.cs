@@ -28,18 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
+            SuspendLayout();
             // 
             // MainForm
             // 
-            this.ClientSize = new System.Drawing.Size(800, 600);
-            this.DoubleBuffered = true;
-            this.Name = "MainForm";
-            this.Text = "Infinite Prison RL";
-            this.Load += new System.EventHandler(this.MainForm_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
-            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyUp);
-            this.ResumeLayout(false);
+            ClientSize = new Size(800, 600);
+            DoubleBuffered = true;
+            KeyPreview = true;
+            Name = "MainForm";
+            Text = "Infinite Prison RL";
+            Load += MainForm_Load;
+            KeyDown += MainForm_KeyDown;
+            KeyUp += MainForm_KeyUp;
+            ResumeLayout(false);
         }
 
         #endregion
