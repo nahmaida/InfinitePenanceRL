@@ -40,12 +40,15 @@
                 Game = game
             };
 
-            wall.Components.Add(new RenderComponent
+            var render = new RenderComponent
             {
                 Color = Color.Gray,
                 Size = new Size(width, height)
-            });
-            wall.Components.Add(new ColliderComponent());
+            };
+            var collider = new ColliderComponent();
+
+            wall.AddComponent(render);
+            wall.AddComponent(collider);
 
             return wall;
         }
