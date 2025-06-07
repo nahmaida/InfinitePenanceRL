@@ -7,10 +7,12 @@ namespace InfinitePenanceRL
     {
         private readonly List<UIComponent> _uiComponents = new List<UIComponent>();
         private readonly GameEngine _game;
+        private readonly Entity _uiEntity;
 
         public UIManager(GameEngine game)
         {
             _game = game;
+            _uiEntity = new Entity { Game = game };
             InitializeUI();
         }
 
@@ -32,8 +34,11 @@ namespace InfinitePenanceRL
             };
 
             // Несколько тестовых предметов
-            inventory.AddItem(new InventoryItem("Зелье", Color.Red) { Count = 3 });
-            inventory.AddItem(new InventoryItem("Меч", Color.LightBlue));
+            inventory.AddItem(new InventoryItem("Зелье", Color.Red) { Count = 3, SpriteName = "potion" });
+            inventory.AddItem(new InventoryItem("Меч", Color.LightBlue) { SpriteName = "sword" });
+
+            _uiEntity.AddComponent(healthBar);
+            _uiEntity.AddComponent(inventory);
 
             _uiComponents.Add(healthBar);
             _uiComponents.Add(inventory);

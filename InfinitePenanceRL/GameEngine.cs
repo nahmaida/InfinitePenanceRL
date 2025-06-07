@@ -11,6 +11,7 @@ namespace InfinitePenanceRL
         public Scene CurrentScene { get; private set; }
         public RenderSystem RenderSystem { get; } = new RenderSystem();
         public UIManager UI { get; private set; }
+        public SpriteManager Sprites { get; } = new SpriteManager();
 
         public Camera Camera { get; } = new Camera();
         public PhysicsSystem Physics { get; } = new PhysicsSystem();
@@ -21,13 +22,14 @@ namespace InfinitePenanceRL
             CurrentScene = new Scene(this);
             Camera.ViewportSize = initialViewportSize;
             UI = new UIManager(this);
+            Sprites.LoadSpritesheets();
 
             var player = EntityFactory.CreatePlayer(this);
             CurrentScene.AddEntity(player);
 
             // Тестовые стены
-            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 300, 200, 50, 200));
-            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 500, 400, 200, 50));
+            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 300, 200, 32, 64)); // 2x4 tiles
+            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 500, 400, 64, 32)); // 4x2 tiles
         }
 
         public void Update()

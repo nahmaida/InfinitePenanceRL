@@ -7,21 +7,21 @@ namespace InfinitePenanceRL
     {
         public void Render(Graphics g, GameEngine game, IEnumerable<Entity> entities)
         {
-            // Черный фон
-            g.Clear(Color.Black);
+            // БЕЛЫЙ фон
+            g.Clear(Color.White);
 
             // Фиксируем в границах экрана
             g.SetClip(new Rectangle(Point.Empty, game.Camera.ViewportSize));
 
+            Console.WriteLine("\n--- Frame Start ---");
             foreach (var entity in entities)
             {
                 var render = entity.GetComponent<RenderComponent>();
                 if (render != null)
                 {
+                    Console.WriteLine($"Rendering entity at {entity.Position} with sprite: {render.SpriteName}");
                     var screenPos = entity.Game.Camera.WorldToScreen(entity.Position);
-                    g.FillRectangle(new SolidBrush(render.Color),
-                        screenPos.X, screenPos.Y,
-                        render.Size.Width, render.Size.Height);
+                    render.Draw(g);
 
                     // Рисуем коллайдеры (можно потом убрать)
                     var collider = entity.GetComponent<ColliderComponent>();
@@ -38,6 +38,7 @@ namespace InfinitePenanceRL
                     }
                 }
             }
+            Console.WriteLine("--- Frame End ---\n");
             g.ResetClip();
         }
     }

@@ -53,6 +53,13 @@ namespace InfinitePenanceRL
                     g.FillRectangle(new SolidBrush(Items[i].Color),
                         x + 2, y + 2, SlotSize - 4, SlotSize - 4);
 
+                    // Спрайт предмета
+                    if (!string.IsNullOrEmpty(Items[i].SpriteName))
+                    {
+                        Owner.Game.Sprites.DrawSprite(g, Items[i].SpriteName, 
+                            x + 4, y + 4, (SlotSize - 8) / 16.0f);
+                    }
+
                     // Количество
                     if (Items[i].Count > 1)
                     {
@@ -123,6 +130,7 @@ namespace InfinitePenanceRL
         public Color Color { get; set; }
         public int Count { get; set; } = 1;
         public bool IsStackable { get; set; } = true;
+        public string SpriteName { get; set; }
 
         public InventoryItem(string name, Color color)
         {
