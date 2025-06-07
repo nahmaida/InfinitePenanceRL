@@ -17,6 +17,19 @@ namespace InfinitePenanceRL
                     ControlStyles.OptimizedDoubleBuffer, true);
 
             _engine = new GameEngine();
+            
+            // отслеживание движения мыши
+            this.MouseMove += MainForm_MouseMove;
+        }
+
+        private void MainForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            var inventory = _engine.UI.GetComponent<InventoryComponent>();
+            if (inventory != null)
+            {
+                inventory.UpdateMousePosition(e.Location);
+                Invalidate(); // Перерисовываем форму для обновления подсказок
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)

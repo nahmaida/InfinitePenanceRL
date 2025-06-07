@@ -10,6 +10,7 @@ namespace InfinitePenanceRL
         public InputManager Input { get; } = new InputManager();
         public Scene CurrentScene { get; private set; }
         public RenderSystem RenderSystem { get; } = new RenderSystem();
+        public UIManager UI { get; private set; }
 
         public Camera Camera { get; } = new Camera();
         public PhysicsSystem Physics { get; } = new PhysicsSystem();
@@ -19,6 +20,7 @@ namespace InfinitePenanceRL
         {
             CurrentScene = new Scene(this);
             Camera.ViewportSize = initialViewportSize;
+            UI = new UIManager(this);
 
             var player = EntityFactory.CreatePlayer(this);
             CurrentScene.AddEntity(player);
@@ -56,6 +58,7 @@ namespace InfinitePenanceRL
             if (CurrentScene != null)
             {
                 RenderSystem.Render(graphics, this, CurrentScene.Entities);
+                UI.Draw(graphics);
             }
         }
     }
