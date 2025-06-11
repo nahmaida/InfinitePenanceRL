@@ -1,10 +1,24 @@
 ﻿namespace InfinitePenanceRL
 {
+    public enum WallType
+    {
+        TopLeft,    // 0,0
+        Top,        // 1,0
+        TopRight,   // 2,0
+        Left,       // 0,1
+        Middle,     // 1,1
+        Right,      // 2,1
+        BottomLeft, // 0,2
+        Bottom,     // 1,2
+        BottomRight,// 2,2
+        DiagonalBR, // 5,1 
+        DiagonalBL  // 6,1
+    }
+
     public static class EntityFactory
     {
         public static Entity CreatePlayer(GameEngine game)
         {
-            Console.WriteLine("Creating player...");
             var player = new Entity
             {
                 Position = new Vector2(100, 100),
@@ -19,7 +33,6 @@
                 SpriteName = "player",
                 Scale = 2.0f
             };
-            Console.WriteLine($"Created player sprite: {render.SpriteName}, size: {render.Size}");
 
             var collider = new ColliderComponent();
             var playerTag = new PlayerTag();
@@ -32,23 +45,17 @@
             return player;
         }
 
-        public static Entity CreateWall(GameEngine game, int x, int y, int width, int height)
+        public static Entity CreateWall(GameEngine game, WallType wallType)
         {
-            Console.WriteLine($"Creating wall: position [{x},{y}], size [{width}x{height}]");
-            var wall = new Entity
-            {
-                Position = new Vector2(x, y),
-                Game = game
-            };
+            var wall = new Entity { Game = game };
 
             var render = new RenderComponent
             {
                 Color = Color.Gray,
-                Size = new Size(width, height),
-                SpriteName = "wall",
-                Scale = 2.0f
+                Size = new Size(Scene.WallSize, Scene.WallSize),
+                SpriteName = GetWallSpriteName(wallType),
+                Scale = 3.0f
             };
-            Console.WriteLine($"Created wall sprite: {render.SpriteName}, size: {render.Size}");
 
             var collider = new ColliderComponent();
 
@@ -56,6 +63,39 @@
             wall.AddComponent(collider);
 
             return wall;
+        }
+
+        private static string GetWallSpriteName(WallType wallType)
+        {
+            return wallType switch
+            {
+                WallType.TopLeft => "wall_top_left",
+                WallType.Top => "wall_top",
+                WallType.TopRight => "wall_top_right",
+                WallType.Left => "wall_left",
+                WallType.Middle => "wall_middle",
+                WallType.Right => "wall_right",
+                WallType.BottomLeft => "wall_bottom_left",
+                WallType.Bottom => "wall_bottom",
+                WallType.BottomRight => "wall_bottom_right",
+                WallType.DiagonalBR => "wall_diagonal_br",
+                WallType.DiagonalBL => "wall_diagonal_bl",
+                _ => "wall_middle"
+            };
+        }
+
+        // Старый метод
+        public static Entity CreateWall(GameEngine game, int x, int y, int width, int height)
+        {
+            var wall = CreateWall(game, WallType.Middle);
+            wall.Position = new Vector2(x, y);
+            wall.GetComponent<RenderComponent>().Size = new Size(width, height);
+            return wall;
+        }
+
+        public static Entity CreateWall(GameEngine game)
+        {
+            return CreateWall(game, WallType.Middle);
         }
     }
 

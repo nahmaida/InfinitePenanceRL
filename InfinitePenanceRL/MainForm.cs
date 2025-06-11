@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace InfinitePenanceRL
 {
     public partial class MainForm : Form
     {
         private readonly GameEngine _engine;
-        private System.Windows.Forms.Timer _gameTimer;
 
         public MainForm()
         {
@@ -16,10 +16,11 @@ namespace InfinitePenanceRL
                     ControlStyles.UserPaint |
                     ControlStyles.OptimizedDoubleBuffer, true);
 
-            _engine = new GameEngine();
+            _engine = new GameEngine(this);
             
-            // отслеживание движения мыши
+            // Отслеживание движения мыши
             this.MouseMove += MainForm_MouseMove;
+            this.KeyPreview = true;
         }
 
         private void MainForm_MouseMove(object sender, MouseEventArgs e)
@@ -35,19 +36,6 @@ namespace InfinitePenanceRL
         private void MainForm_Load(object sender, EventArgs e)
         {
             _engine.Initialize(this.ClientSize);
-
-            _gameTimer = new System.Windows.Forms.Timer
-            {
-                Interval = 16 // ~60 фпс
-            };
-            _gameTimer.Tick += GameLoop;
-            _gameTimer.Start();
-        }
-
-        private void GameLoop(object sender, EventArgs e)
-        {
-            _engine.Update();
-            Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -62,8 +50,8 @@ namespace InfinitePenanceRL
 
             if (_engine != null && _engine.Camera != null)
             {
-                // Обновляем камеру когда меняем размер окна
-                _engine.Camera.ViewportSize = this.ClientSize;
+                // Обновляем камеру при изменении размера окна
+                _engine.Camera = new Camera(this.ClientSize);
 
                 // Центрируем на игроке
                 var player = _engine.CurrentScene?.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
@@ -74,14 +62,19 @@ namespace InfinitePenanceRL
             }
         }
 
-        private void MainForm_KeyDown(object sender, KeyEventArgs e)
+        protected override void OnKeyDown(KeyEventArgs e)
         {
+            base.OnKeyDown(e);
             _engine.Input.KeyDown(e.KeyCode);
+            e.Handled = true;
+            e.SuppressKeyPress = true;
         }
 
-        private void MainForm_KeyUp(object sender, KeyEventArgs e)
+        protected override void OnKeyUp(KeyEventArgs e)
         {
+            base.OnKeyUp(e);
             _engine.Input.KeyUp(e.KeyCode);
+            e.Handled = true;
         }
     }
 }

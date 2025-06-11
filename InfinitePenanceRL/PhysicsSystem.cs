@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 
 namespace InfinitePenanceRL
@@ -17,6 +18,15 @@ namespace InfinitePenanceRL
 
             var render = entity.GetComponent<RenderComponent>();
             if (render == null) return true;
+
+            // Проверяем границы мира
+            if (newPosition.X < 0 || 
+                newPosition.Y < 0 || 
+                newPosition.X + render.Size.Width > entity.Game.WorldSize.Width ||
+                newPosition.Y + render.Size.Height > entity.Game.WorldSize.Height)
+            {
+                return false;
+            }
 
             var testBounds = new RectangleF(
                 newPosition.X,

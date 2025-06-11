@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Drawing;
+using System.Collections.Generic;
+using System.Windows.Forms;
+using System.Linq;
 
 namespace InfinitePenanceRL
 {
@@ -7,29 +10,61 @@ namespace InfinitePenanceRL
     public class GameEngine
     {
         public GameState State { get; private set; } = GameState.Playing;
-        public InputManager Input { get; } = new InputManager();
         public Scene CurrentScene { get; private set; }
         public RenderSystem RenderSystem { get; } = new RenderSystem();
+        public InputManager Input { get; } = new InputManager();
         public UIManager UI { get; private set; }
         public SpriteManager Sprites { get; } = new SpriteManager();
-
-        public Camera Camera { get; } = new Camera();
+        public Camera Camera { get; set; }
         public PhysicsSystem Physics { get; } = new PhysicsSystem();
-        public Size WorldSize { get; set; } = new Size(4000, 4000); // Размер мира
+        public Size WorldSize { get; set; }
+
+        private System.Windows.Forms.Timer gameTimer;
+        private MainForm mainForm;
+        private const int TARGET_FPS = 60;
+        private const int MAZE_WIDTH = 41; // 4000/96 округлено вниз
+        private const int MAZE_HEIGHT = 41; // 4000/96 округлено вниз
+
+        public GameEngine(MainForm form)
+        {
+            mainForm = form;
+            Camera = new Camera(form.ClientSize);
+            CurrentScene = new Scene(this);
+            UI = new UIManager(this);
+
+            InitializeGame();
+            SetupGameTimer();
+        }
+
+        private void InitializeGame()
+        {
+            Initialize(mainForm.ClientSize);
+        }
+
+        private void SetupGameTimer()
+        {
+            gameTimer = new System.Windows.Forms.Timer();
+            gameTimer.Interval = 1000 / TARGET_FPS;
+            gameTimer.Tick += (sender, e) =>
+            {
+                Update();
+                mainForm.Invalidate();
+            };
+            gameTimer.Start();
+        }
 
         public void Initialize(Size initialViewportSize)
         {
             CurrentScene = new Scene(this);
-            Camera.ViewportSize = initialViewportSize;
+            Camera = new Camera(initialViewportSize);
             UI = new UIManager(this);
             Sprites.LoadSpritesheets();
 
-            var player = EntityFactory.CreatePlayer(this);
-            CurrentScene.AddEntity(player);
+            // Устанавливаем размер мира на основе размеров лабиринта
+            WorldSize = new Size(MAZE_WIDTH * Scene.CellSize, MAZE_HEIGHT * Scene.CellSize);
 
-            // Тестовые стены
-            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 300, 200, 32, 64)); // 2x4 tiles
-            CurrentScene.AddEntity(EntityFactory.CreateWall(this, 500, 400, 64, 32)); // 4x2 tiles
+            // Генерируем лабиринт
+            CurrentScene.GenerateMaze(MAZE_WIDTH, MAZE_HEIGHT);
         }
 
         public void Update()
@@ -46,7 +81,7 @@ namespace InfinitePenanceRL
                 }
             }
 
-            // Камера следует за игроком
+            // Центрируем камеру на игроке
             var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
             if (player != null)
             {

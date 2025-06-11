@@ -38,8 +38,6 @@
             Name = "MainForm";
             Text = "Infinite Prison RL";
             Load += MainForm_Load;
-            KeyDown += MainForm_KeyDown;
-            KeyUp += MainForm_KeyUp;
             ResumeLayout(false);
         }
 

@@ -18,7 +18,6 @@ namespace InfinitePenanceRL
             if (Game.Input.IsKeyDown(Keys.A)) newPosition.X -= Speed;
             if (Game.Input.IsKeyDown(Keys.D)) newPosition.X += Speed;
 
-            // Двигаемся только если можем
             if (Game.Physics.CanMoveTo(Owner, newPosition))
             {
                 Owner.Position = newPosition;

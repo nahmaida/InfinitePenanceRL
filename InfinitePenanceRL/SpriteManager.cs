@@ -13,39 +13,37 @@ namespace InfinitePenanceRL
         {
             try
             {
-                // Загружаем все спрайтшиты
+                // Load spritesheets
                 _spritesheets["characters"] = new Bitmap("assets/roguelike_characters.png");
                 _spritesheets["items"] = new Bitmap("assets/roguelike_items.png");
                 _spritesheets["walls"] = new Bitmap("assets/roguelike_walls.png");
                 _spritesheets["floors"] = new Bitmap("assets/roguelike_floors.png");
                 _spritesheets["ui"] = new Bitmap("assets/roguelike_ui.png");
 
-                Console.WriteLine("Loaded spritesheets:");
-                foreach (var sheet in _spritesheets)
-                {
-                    Console.WriteLine($"- {sheet.Key}: {sheet.Value.Width}x{sheet.Value.Height}");
-                }
-
-                // Определяем регионы для спрайтов (16x16 каждый)
+                // Define sprite regions (16x16 each)
                 
-                // Игрок
-                _spriteRegions["player"] = GetTileRect(3, 0, "characters");
+                // Player
+                _spriteRegions["player"] = GetTileRect(6, 0, "characters");
                 
-                // Предметы
-                _spriteRegions["potion"] = GetTileRect(5, 3, "items");  // зелье
-                _spriteRegions["sword"] = GetTileRect(6, 0, "items");   // меч
+                // Items
+                _spriteRegions["potion"] = GetTileRect(5, 3, "items");
+                _spriteRegions["sword"] = GetTileRect(6, 0, "items");
                 
-                // Стены (каменная стена)
-                _spriteRegions["wall"] = GetTileRect(2, 0, "walls");
+                // Wall variants
+                _spriteRegions["wall_top_left"] = GetTileRect(0, 0, "walls");
+                _spriteRegions["wall_top"] = GetTileRect(1, 0, "walls");
+                _spriteRegions["wall_top_right"] = GetTileRect(2, 0, "walls");
+                _spriteRegions["wall_left"] = GetTileRect(0, 1, "walls");
+                _spriteRegions["wall_middle"] = GetTileRect(1, 1, "walls");
+                _spriteRegions["wall_right"] = GetTileRect(2, 1, "walls");
+                _spriteRegions["wall_bottom_left"] = GetTileRect(0, 2, "walls");
+                _spriteRegions["wall_bottom"] = GetTileRect(1, 2, "walls");
+                _spriteRegions["wall_bottom_right"] = GetTileRect(2, 2, "walls");
+                _spriteRegions["wall_diagonal_br"] = GetTileRect(5, 1, "walls");
+                _spriteRegions["wall_diagonal_bl"] = GetTileRect(6, 1, "walls");
                 
-                // Пол (каменный пол)
-                _spriteRegions["floor"] = GetTileRect(0, 0, "floors");
-
-                Console.WriteLine("\nDefined sprite regions:");
-                foreach (var region in _spriteRegions)
-                {
-                    Console.WriteLine($"- {region.Key}: {region.Value}");
-                }
+                // Floor
+                _spriteRegions["floor"] = GetTileRect(0, 1, "floors");
             }
             catch (Exception ex)
             {
@@ -57,23 +55,11 @@ namespace InfinitePenanceRL
         public void DrawSprite(Graphics g, string spriteName, float x, float y, float scale = 2.0f)
         {
             string spritesheet = GetSpritesheetForSprite(spriteName);
-            if (string.IsNullOrEmpty(spritesheet))
-            {
-                Console.WriteLine($"Spritesheet not found for sprite: {spriteName}");
+            if (string.IsNullOrEmpty(spritesheet) || !_spritesheets.ContainsKey(spritesheet))
                 return;
-            }
-
-            if (!_spritesheets.ContainsKey(spritesheet))
-            {
-                Console.WriteLine($"Spritesheet not loaded: {spritesheet}");
-                return;
-            }
 
             if (!_spriteRegions.TryGetValue(spriteName, out Rectangle region))
-            {
-                Console.WriteLine($"Region not found for sprite: {spriteName}");
                 return;
-            }
 
             try
             {
@@ -81,7 +67,6 @@ namespace InfinitePenanceRL
                 g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
 
                 var destRect = new RectangleF(x, y, region.Width * scale, region.Height * scale);
-                Console.WriteLine($"Drawing {spriteName} from {spritesheet} - Source: {region}, Dest: {destRect}, Scale: {scale}");
 
                 g.DrawImage(_spritesheets[spritesheet],
                     destRect,
@@ -91,17 +76,18 @@ namespace InfinitePenanceRL
             catch (Exception ex)
             {
                 Console.WriteLine($"ERROR drawing sprite {spriteName}: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
             }
         }
 
         private string GetSpritesheetForSprite(string spriteName)
         {
+            if (spriteName.StartsWith("wall_"))
+                return "walls";
+                
             return spriteName switch
             {
                 "player" => "characters",
                 "potion" or "sword" => "items",
-                "wall" => "walls",
                 "floor" => "floors",
                 _ => string.Empty
             };
@@ -114,15 +100,11 @@ namespace InfinitePenanceRL
                 int maxX = bmp.Width / TILE_SIZE - 1;
                 int maxY = bmp.Height / TILE_SIZE - 1;
                 
-                // Убеждаемся что не выходим за границы
                 x = Math.Min(x, maxX);
                 y = Math.Min(y, maxY);
                 
-                var rect = new Rectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                Console.WriteLine($"Created region for {spritesheet} [{x},{y}]: {rect}");
-                return rect;
+                return new Rectangle(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
             }
-            Console.WriteLine($"ERROR: Spritesheet {spritesheet} not found for creating region [{x},{y}]");
             return new Rectangle(0, 0, TILE_SIZE, TILE_SIZE);
         }
 
