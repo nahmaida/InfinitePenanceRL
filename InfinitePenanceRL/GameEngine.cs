@@ -6,25 +6,26 @@ using System.Linq;
 
 namespace InfinitePenanceRL
 {
-    // Класс для движка игры (рендеринг и прочее)
+    // Главный движок игры - управляет всеми системами и обновлением состояния
     public class GameEngine
     {
-        public GameState State { get; private set; } = GameState.Playing;
-        public Scene CurrentScene { get; private set; }
-        public RenderSystem RenderSystem { get; } = new RenderSystem();
-        public InputManager Input { get; } = new InputManager();
-        public UIManager UI { get; private set; }
-        public SpriteManager Sprites { get; } = new SpriteManager();
-        public Camera Camera { get; set; }
-        public PhysicsSystem Physics { get; } = new PhysicsSystem();
-        public Size WorldSize { get; set; }
+        public GameState State { get; private set; } = GameState.Playing;  // Текущее состояние игры
+        public Scene CurrentScene { get; private set; }  // Активная сцена
+        public RenderSystem RenderSystem { get; } = new RenderSystem();  // Система отрисовки
+        public InputManager Input { get; } = new InputManager();  // Обработка ввода
+        public UIManager UI { get; private set; }  // Управление интерфейсом
+        public SpriteManager Sprites { get; } = new SpriteManager();  // Управление спрайтами
+        public Camera Camera { get; set; }  // Игровая камера
+        public PhysicsSystem Physics { get; } = new PhysicsSystem();  // Физика и коллизии
+        public Size WorldSize { get; set; }  // Размеры игрового мира
 
-        private System.Windows.Forms.Timer gameTimer;
-        private MainForm mainForm;
-        private const int TARGET_FPS = 60;
-        private const int MAZE_WIDTH = 41; // 4000/96 округлено вниз
-        private const int MAZE_HEIGHT = 41; // 4000/96 округлено вниз
+        private System.Windows.Forms.Timer gameTimer;  // Таймер для обновления игры
+        private MainForm mainForm;  // Главное окно игры
+        private const int TARGET_FPS = 60;  // Целевой FPS
+        private const int MAZE_WIDTH = 41;  // Ширина лабиринта (4000/96 округлено вниз)
+        private const int MAZE_HEIGHT = 41;  // Высота лабиринта (4000/96 округлено вниз)
 
+        // Создаём новый движок и привязываем его к окну
         public GameEngine(MainForm form)
         {
             mainForm = form;
@@ -36,23 +37,26 @@ namespace InfinitePenanceRL
             SetupGameTimer();
         }
 
+        // Инициализация игры при запуске
         private void InitializeGame()
         {
             Initialize(mainForm.ClientSize);
         }
 
+        // Настраиваем таймер для обновления игры
         private void SetupGameTimer()
         {
             gameTimer = new System.Windows.Forms.Timer();
-            gameTimer.Interval = 1000 / TARGET_FPS;
+            gameTimer.Interval = 1000 / TARGET_FPS;  // Интервал между кадрами
             gameTimer.Tick += (sender, e) =>
             {
-                Update();
-                mainForm.Invalidate();
+                Update();  // Обновляем состояние
+                mainForm.Invalidate();  // Перерисовываем окно
             };
             gameTimer.Start();
         }
 
+        // Инициализация или перезапуск игры
         public void Initialize(Size initialViewportSize)
         {
             CurrentScene = new Scene(this);
@@ -60,19 +64,21 @@ namespace InfinitePenanceRL
             UI = new UIManager(this);
             Sprites.LoadSpritesheets();
 
-            // Устанавливаем размер мира на основе размеров лабиринта
+            // Задаём размер мира на основе размеров лабиринта
             WorldSize = new Size(MAZE_WIDTH * Scene.CellSize, MAZE_HEIGHT * Scene.CellSize);
 
-            // Генерируем лабиринт
+            // Создаём новый лабиринт
             CurrentScene.GenerateMaze(MAZE_WIDTH, MAZE_HEIGHT);
         }
 
+        // Обновление состояния игры
         public void Update()
         {
             if (State != GameState.Playing) return;
 
             Physics.Update(CurrentScene);
 
+            // Обновляем все компоненты всех объектов
             foreach (var entity in CurrentScene.Entities)
             {
                 foreach (var component in entity.Components)
@@ -81,7 +87,7 @@ namespace InfinitePenanceRL
                 }
             }
 
-            // Центрируем камеру на игроке
+            // Камера следует за игроком
             var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
             if (player != null)
             {
@@ -89,23 +95,24 @@ namespace InfinitePenanceRL
             }
         }
 
+        // Отрисовка игры
         public void Render(Graphics graphics)
         {
-            graphics.Clear(Color.Black);
+            graphics.Clear(Color.Black);  // Чистим экран
             if (CurrentScene != null)
             {
-                RenderSystem.Render(graphics, this, CurrentScene.Entities);
-                UI.Draw(graphics);
+                RenderSystem.Render(graphics, this, CurrentScene.Entities);  // Рисуем игровые объекты
+                UI.Draw(graphics);  // Рисуем интерфейс поверх всего
             }
         }
     }
 
-    // Состояния игры
+    // Возможные состояния игры
     public enum GameState
     {
-        MainMenu,
-        Playing,
-        Paused,
-        GameOver
+        MainMenu,    // Главное меню
+        Playing,     // Идёт игра
+        Paused,      // Игра на паузе
+        GameOver     // Игра окончена
     }
 }

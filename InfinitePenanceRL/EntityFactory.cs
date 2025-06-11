@@ -2,46 +2,54 @@
 {
     public enum WallType
     {
-        TopLeft,    // 0,0
-        Top,        // 1,0
-        TopRight,   // 2,0
-        Left,       // 0,1
-        Middle,     // 1,1
-        Right,      // 2,1
-        BottomLeft, // 0,2
-        Bottom,     // 1,2
-        BottomRight,// 2,2
-        DiagonalBR, // 5,1 
-        DiagonalBL  // 6,1
+        TopLeft,    // Верхний левый угол (0,0)
+        Top,        // Верхняя стена (1,0)
+        TopRight,   // Верхний правый угол (2,0)
+        Left,       // Левая стена (0,1)
+        Middle,     // Центр стены (1,1)
+        Right,      // Правая стена (2,1)
+        BottomLeft, // Нижний левый угол (0,2)
+        Bottom,     // Нижняя стена (1,2)
+        BottomRight,// Нижний правый угол (2,2)
+        DiagonalTL, // Диагональ сверху-слева (5,1)
+        DiagonalTR, // Диагональ сверху-справа (6,1)
+        DiagonalBL, // Диагональ снизу-слева (5,2)
+        DiagonalBR  // Диагональ снизу-справа (6,2)
     }
 
+    // Фабрика для создания всяких игровых объектов
     public static class EntityFactory
     {
         public static Entity CreatePlayer(GameEngine game)
         {
+            Console.WriteLine("Создаем игрока");
             var player = new Entity
             {
                 Position = new Vector2(100, 100),
                 Game = game
             };
 
+            // Добавляем все нужные компоненты
             var movement = new MovementComponent { Speed = 5f };
             var render = new RenderComponent
             {
                 Color = Color.Blue,
-                Size = new Size(16 * 2, 16 * 2),
+                Size = new Size(32, 32),  // 2x от размера спрайта (16px)
                 SpriteName = "player",
                 Scale = 2.0f
             };
 
             var collider = new ColliderComponent();
             var playerTag = new PlayerTag();
+            var animation = new AnimationComponent();
 
             player.AddComponent(movement);
             player.AddComponent(render);
             player.AddComponent(collider);
             player.AddComponent(playerTag);
+            player.AddComponent(animation);
 
+            Console.WriteLine("Игрок создан со всеми компонентами");
             return player;
         }
 
@@ -49,39 +57,38 @@
         {
             var wall = new Entity { Game = game };
 
+            // Настраиваем рендер стены
             var render = new RenderComponent
             {
                 Color = Color.Gray,
                 Size = new Size(Scene.WallSize, Scene.WallSize),
-                SpriteName = GetWallSpriteName(wallType),
+                SpriteName = wallType switch
+                {
+                    WallType.TopLeft => "wall_top_left",
+                    WallType.Top => "wall_top",
+                    WallType.TopRight => "wall_top_right",
+                    WallType.Left => "wall_left",
+                    WallType.Middle => "wall_middle",
+                    WallType.Right => "wall_right",
+                    WallType.BottomLeft => "wall_bottom_left",
+                    WallType.Bottom => "wall_bottom",
+                    WallType.BottomRight => "wall_bottom_right",
+                    WallType.DiagonalTL => "wall_diagonal_tl",
+                    WallType.DiagonalTR => "wall_diagonal_tr",
+                    WallType.DiagonalBL => "wall_diagonal_bl",
+                    WallType.DiagonalBR => "wall_diagonal_br",
+                    _ => "wall_middle"
+                },
                 Scale = 3.0f
             };
 
+            // Добавляем коллайдер чтобы нельзя было пройти сквозь стену
             var collider = new ColliderComponent();
 
             wall.AddComponent(render);
             wall.AddComponent(collider);
 
             return wall;
-        }
-
-        private static string GetWallSpriteName(WallType wallType)
-        {
-            return wallType switch
-            {
-                WallType.TopLeft => "wall_top_left",
-                WallType.Top => "wall_top",
-                WallType.TopRight => "wall_top_right",
-                WallType.Left => "wall_left",
-                WallType.Middle => "wall_middle",
-                WallType.Right => "wall_right",
-                WallType.BottomLeft => "wall_bottom_left",
-                WallType.Bottom => "wall_bottom",
-                WallType.BottomRight => "wall_bottom_right",
-                WallType.DiagonalBR => "wall_diagonal_br",
-                WallType.DiagonalBL => "wall_diagonal_bl",
-                _ => "wall_middle"
-            };
         }
 
         // Старый метод

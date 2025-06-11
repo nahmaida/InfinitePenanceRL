@@ -3,22 +3,23 @@ using System.Drawing;
 
 namespace InfinitePenanceRL
 {
+    // Система отрисовки - рисует всё, что видит игрок
     public class RenderSystem
     {
-        private const int FLOOR_TILE_SIZE = 48; // 16 * 3 (масштаб)
+        private const int FLOOR_TILE_SIZE = 48; // Размер тайла пола (16 пикселей * 3 - масштаб)
 
         public void Render(Graphics g, GameEngine game, IEnumerable<Entity> entities)
         {
-            // Очищаем фон
+            // Заливаем фон серым цветом
             g.Clear(ColorTranslator.FromHtml("#5E6356"));
 
-            // Устанавливаем область отсечения по размеру окна
+            // Ограничиваем область рисования размером окна
             g.SetClip(new Rectangle(Point.Empty, game.Camera.ViewportSize));
 
-            // Рисуем тайлы пола
+            // Сначала рисуем пол (чтобы он был под всеми объектами)
             DrawFloorTiles(g, game);
 
-            // Рисуем сущности
+            // Теперь рисуем все игровые объекты
             foreach (var entity in entities)
             {
                 var render = entity.GetComponent<RenderComponent>();
@@ -27,7 +28,7 @@ namespace InfinitePenanceRL
                     var screenPos = entity.Game.Camera.WorldToScreen(entity.Position);
                     render.Draw(g);
 
-                //     // Рисуем коллайдеры (для отладки)
+                //     // Для отладки: рисуем границы коллайдеров белым цветом
                 //     var collider = entity.GetComponent<ColliderComponent>();
                 //     if (collider != null)
                 //     {
@@ -46,22 +47,24 @@ namespace InfinitePenanceRL
             g.ResetClip();
         }
 
+        // Рисуем тайлы пола в видимой области
         private void DrawFloorTiles(Graphics g, GameEngine game)
         {
-            // Вычисляем видимую область в мировых координатах
+            // Находим границы видимой области в координатах игрового мира
             var viewportWorldPos = game.Camera.ScreenToWorld(Point.Empty);
             var viewportBottomRight = game.Camera.ScreenToWorld(new Point(
                 game.Camera.ViewportSize.Width,
                 game.Camera.ViewportSize.Height
             ));
 
-            // Вычисляем диапазон тайлов для отрисовки
+            // Считаем, какие тайлы пола нужно нарисовать
+            // Добавляем по одному тайлу с каждой стороны для плавного скроллинга
             int startX = ((int)viewportWorldPos.X / FLOOR_TILE_SIZE) - 1;
             int startY = ((int)viewportWorldPos.Y / FLOOR_TILE_SIZE) - 1;
             int endX = ((int)viewportBottomRight.X / FLOOR_TILE_SIZE) + 1;
             int endY = ((int)viewportBottomRight.Y / FLOOR_TILE_SIZE) + 1;
 
-            // Рисуем видимые тайлы пола
+            // Рисуем все видимые тайлы пола по сетке
             for (int y = startY; y <= endY; y++)
             {
                 for (int x = startX; x <= endX; x++)

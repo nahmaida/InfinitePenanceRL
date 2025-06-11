@@ -1,35 +1,48 @@
 using System.Drawing;
 using System.Collections.Generic;
+using System.IO;
 
 namespace InfinitePenanceRL
 {
+    // Менеджер спрайтов - грузит и хранит все текстурки
     public class SpriteManager
     {
         private readonly Dictionary<string, Bitmap> _spritesheets = new Dictionary<string, Bitmap>();
         private readonly Dictionary<string, Rectangle> _spriteRegions = new Dictionary<string, Rectangle>();
         private const int TILE_SIZE = 16;
+        private HashSet<string> _loggedSprites = new HashSet<string>();
+
+        private void Log(string message)
+        {
+            using (StreamWriter writer = File.AppendText("game.log"))
+            {
+                writer.WriteLine($"[Sprite] {message}");
+            }
+        }
 
         public void LoadSpritesheets()
         {
             try
             {
-                // Load spritesheets
+                // Загружаем все спрайтшиты
                 _spritesheets["characters"] = new Bitmap("assets/roguelike_characters.png");
                 _spritesheets["items"] = new Bitmap("assets/roguelike_items.png");
                 _spritesheets["walls"] = new Bitmap("assets/roguelike_walls.png");
                 _spritesheets["floors"] = new Bitmap("assets/roguelike_floors.png");
                 _spritesheets["ui"] = new Bitmap("assets/roguelike_ui.png");
+                _spritesheets["warrior"] = new Bitmap("assets/animations/warrior_48px.png");
+                Log("Загрузили все спрайтшиты");
 
-                // Define sprite regions (16x16 each)
+                // Задаем регионы для всех спрайтов (размер 16x16)
                 
-                // Player
-                _spriteRegions["player"] = GetTileRect(6, 0, "characters");
+                // Игрок - берем кадр анимации "стоим на месте"
+                _spriteRegions["player"] = GetTileRect(1, 2, "warrior");
                 
-                // Items
+                // Предметы
                 _spriteRegions["potion"] = GetTileRect(5, 3, "items");
                 _spriteRegions["sword"] = GetTileRect(6, 0, "items");
                 
-                // Wall variants
+                // Варианты стен
                 _spriteRegions["wall_top_left"] = GetTileRect(0, 0, "walls");
                 _spriteRegions["wall_top"] = GetTileRect(1, 0, "walls");
                 _spriteRegions["wall_top_right"] = GetTileRect(2, 0, "walls");
@@ -39,30 +52,53 @@ namespace InfinitePenanceRL
                 _spriteRegions["wall_bottom_left"] = GetTileRect(0, 2, "walls");
                 _spriteRegions["wall_bottom"] = GetTileRect(1, 2, "walls");
                 _spriteRegions["wall_bottom_right"] = GetTileRect(2, 2, "walls");
-                _spriteRegions["wall_diagonal_br"] = GetTileRect(5, 1, "walls");
-                _spriteRegions["wall_diagonal_bl"] = GetTileRect(6, 1, "walls");
+                _spriteRegions["wall_diagonal_tl"] = GetTileRect(6, 2, "walls");  // Диагональ сверху-слева
+                _spriteRegions["wall_diagonal_tr"] = GetTileRect(5, 2, "walls");  // Диагональ сверху-справа
+                _spriteRegions["wall_diagonal_bl"] = GetTileRect(6, 1, "walls");  // Диагональ снизу-слева
+                _spriteRegions["wall_diagonal_br"] = GetTileRect(5, 1, "walls");  // Диагональ снизу-справа
                 
-                // Floor
+                // Пол
                 _spriteRegions["floor"] = GetTileRect(0, 1, "floors");
+                Log("Задали все регионы спрайтов");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR loading sprites: {ex.Message}");
-                Console.WriteLine($"Current directory: {Environment.CurrentDirectory}");
+                Log($"ОШИБКА при загрузке спрайтов: {ex.Message}");
+                Log($"Текущая директория: {Environment.CurrentDirectory}");
             }
         }
 
-        public void DrawSprite(Graphics g, string spriteName, float x, float y, float scale = 2.0f)
+        public void DrawSprite(Graphics g, string spriteName, float x, float y, float scale = 2.0f, Rectangle? customRegion = null)
         {
             string spritesheet = GetSpritesheetForSprite(spriteName);
             if (string.IsNullOrEmpty(spritesheet) || !_spritesheets.ContainsKey(spritesheet))
+            {
+                if (!_loggedSprites.Contains(spriteName))
+                {
+                    Log($"Не нашли спрайтшит для {spriteName}");
+                    _loggedSprites.Add(spriteName);
+                }
                 return;
+            }
 
-            if (!_spriteRegions.TryGetValue(spriteName, out Rectangle region))
+            Rectangle region;
+            if (customRegion.HasValue)
+            {
+                region = customRegion.Value;
+            }
+            else if (!_spriteRegions.TryGetValue(spriteName, out region))
+            {
+                if (!_loggedSprites.Contains(spriteName))
+                {
+                    Log($"Не нашли регион для спрайта {spriteName}");
+                    _loggedSprites.Add(spriteName);
+                }
                 return;
+            }
 
             try
             {
+                // Настраиваем рендер для пиксель-арта
                 g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
                 g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
 
@@ -75,10 +111,15 @@ namespace InfinitePenanceRL
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR drawing sprite {spriteName}: {ex.Message}");
+                if (!_loggedSprites.Contains(spriteName))
+                {
+                    Log($"ОШИБКА при отрисовке спрайта {spriteName}: {ex.Message}");
+                    _loggedSprites.Add(spriteName);
+                }
             }
         }
 
+        // Определяем, какой спрайтшит использовать для спрайта
         private string GetSpritesheetForSprite(string spriteName)
         {
             if (spriteName.StartsWith("wall_"))
@@ -86,13 +127,14 @@ namespace InfinitePenanceRL
                 
             return spriteName switch
             {
-                "player" => "characters",
+                "player" => "warrior",
                 "potion" or "sword" => "items",
                 "floor" => "floors",
                 _ => string.Empty
             };
         }
 
+        // Получаем прямоугольник для тайла из спрайтшита
         private Rectangle GetTileRect(int x, int y, string spritesheet)
         {
             if (_spritesheets.TryGetValue(spritesheet, out Bitmap bmp))

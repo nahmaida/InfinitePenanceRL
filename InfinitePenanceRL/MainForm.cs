@@ -20,7 +20,19 @@ namespace InfinitePenanceRL
             
             // Отслеживание движения мыши
             this.MouseMove += MainForm_MouseMove;
+            this.MouseDown += MainForm_MouseDown;
+            this.MouseUp += MainForm_MouseUp;
             this.KeyPreview = true;
+        }
+
+        private void MainForm_MouseDown(object sender, MouseEventArgs e)
+        {
+            _engine.Input.MouseDown(e.Button);
+        }
+
+        private void MainForm_MouseUp(object sender, MouseEventArgs e)
+        {
+            _engine.Input.MouseUp(e.Button);
         }
 
         private void MainForm_MouseMove(object sender, MouseEventArgs e)

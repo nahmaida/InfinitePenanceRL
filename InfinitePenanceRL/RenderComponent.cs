@@ -1,55 +1,86 @@
 ﻿using System.Drawing;
+using System.IO;
+using System.Drawing.Drawing2D;
 
 namespace InfinitePenanceRL
 {
-    // Рендер перса
+    // Компонент для отрисовки (спрайты, цвета, масштаб и все такое)
     public class RenderComponent : Component
     {
-        public Color Color { get; set; } = Color.Red;
+        public Color Color { get; set; } = Color.White;
         public Size Size { get; set; } = new Size(32, 32);
         public string SpriteName { get; set; }
-        public float Scale { get; set; } = 2.0f;
+        public float Scale { get; set; } = 1.0f;
+        public Rectangle? SpriteRegion { get; set; }
+        public bool FlipHorizontal { get; set; } = false;
         private const int TILE_SIZE = 16;
+        private Vector2 _lastLoggedPosition;
+        private bool _hasLoggedInitial;
+
+        private void Log(string message)
+        {
+            using (StreamWriter writer = File.AppendText("game.log"))
+            {
+                writer.WriteLine($"[Render] {message}");
+            }
+        }
 
         public void Draw(Graphics g)
         {
-            if (Owner == null || g == null) return;
+            if (Owner == null || g == null) 
+            {
+                if (!_hasLoggedInitial)
+                {
+                    Log("Draw called with null Owner or Graphics");
+                    _hasLoggedInitial = true;
+                }
+                return;
+            }
 
             var screenPos = Owner.Game.Camera.WorldToScreen(Owner.Position);
 
+            // Only log position if it's changed significantly
+            if (!_hasLoggedInitial || Vector2.Distance(_lastLoggedPosition, Owner.Position) > 50)
+            {
+                Log($"Drawing {SpriteName} at {screenPos.X}, {screenPos.Y} with scale {Scale}");
+                _lastLoggedPosition = Owner.Position;
+                _hasLoggedInitial = true;
+            }
+
             if (!string.IsNullOrEmpty(SpriteName))
             {
-                if (SpriteName == "wall")
+                if (FlipHorizontal)
                 {
-                    // стены
-                    int tilesX = Size.Width / (int)(TILE_SIZE * Scale);
-                    int tilesY = Size.Height / (int)(TILE_SIZE * Scale);
-                    Console.WriteLine($"Drawing wall: {tilesX}x{tilesY} tiles at {screenPos}");
-
-                    for (int y = 0; y < tilesY; y++)
-                    {
-                        for (int x = 0; x < tilesX; x++)
-                        {
-                            float tileX = screenPos.X + x * TILE_SIZE * Scale;
-                            float tileY = screenPos.Y + y * TILE_SIZE * Scale;
-                            Owner.Game.Sprites.DrawSprite(g, SpriteName, tileX, tileY, Scale);
-                        }
-                    }
+                    // Сохраняем текущую трансформацию
+                    var transform = g.Transform;
+                    
+                    // Настраиваем отражение по горизонтали
+                    g.TranslateTransform(screenPos.X + Size.Width, screenPos.Y);
+                    g.ScaleTransform(-1, 1);
+                    
+                    // Рисуем спрайт (в точке 0,0, т.к. мы уже сдвинули координаты)
+                    Owner.Game.Sprites.DrawSprite(g, SpriteName, 0, 0, Scale, SpriteRegion);
+                    
+                    // Возвращаем исходную трансформацию
+                    g.Transform = transform;
                 }
                 else
                 {
-                    // спрайт
-                    Console.WriteLine($"Drawing sprite {SpriteName} at {screenPos}");
-                    Owner.Game.Sprites.DrawSprite(g, SpriteName, screenPos.X, screenPos.Y, Scale);
+                    Owner.Game.Sprites.DrawSprite(g, SpriteName, screenPos.X, screenPos.Y, Scale, SpriteRegion);
                 }
             }
             else
             {
-                // если нет спрайта, то рисуем прямоугольник
-                Console.WriteLine("ERROR 404 SPRITE NOT FOUND!");
-                g.FillRectangle(new SolidBrush(Color),
-                    screenPos.X, screenPos.Y,
-                    Size.Width, Size.Height);
+                // Если спрайта нет - рисуем цветной прямоугольник
+                if (!_hasLoggedInitial)
+                {
+                    Log("Drawing fallback rectangle due to missing sprite");
+                    _hasLoggedInitial = true;
+                }
+                using (var brush = new SolidBrush(Color))
+                {
+                    g.FillRectangle(brush, screenPos.X, screenPos.Y, Size.Width, Size.Height);
+                }
             }
         }
     }

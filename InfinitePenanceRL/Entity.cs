@@ -3,18 +3,20 @@ using System.Linq;
 
 namespace InfinitePenanceRL
 {
-    // класс для существ и обьектов
+    // Базовый класс для всех игровых объектов (игрок, враги, стены и т.д.)
     public class Entity
     {
-        public Vector2 Position { get; set; }
-        public List<Component> Components { get; } = new List<Component>();
-        public GameEngine Game { get; set; }
+        public Vector2 Position { get; set; }  // Позиция объекта в игровом мире
+        public List<Component> Components { get; } = new List<Component>();  // Список компонентов объекта
+        public GameEngine Game { get; set; }  // Ссылка на игровой движок
 
+        // Ищем компонент нужного типа (например, для отрисовки или физики)
         public T GetComponent<T>() where T : Component
         {
             return Components.OfType<T>().FirstOrDefault();
         }
 
+        // Добавляем новый компонент к объекту
         public void AddComponent(Component component)
         {
             component.Owner = this;
