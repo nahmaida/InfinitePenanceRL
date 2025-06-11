@@ -1,5 +1,7 @@
 # Infinite Penance RL - Рогалик в Бесконечной Тюрьме Богов
 
+![Демо геймплея](https://github.com/user-attachments/assets/81094f98-e632-42ef-9481-dd1a0fe20faa)
+
 **Жанр**: Рогалик с элементами Souls-like
 
 **Описание**:  
