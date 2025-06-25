@@ -13,14 +13,14 @@ namespace InfinitePenanceRL
         private string _currentAnimation = "idle";
         private int _currentFrame = 0;
         private float _frameTimer = 0;
-        private const float FRAME_TIME = 0.2f; // Время между кадрами (чем больше, тем медленнее)
+        private const float FRAME_TIME = 0.1f; // Время между кадрами (чем больше, тем медленнее)
         private const int SPRITE_SIZE = 16;
         private bool _isFirstUpdate = true;
         private string _lastLoggedAnimation = "";
         private RenderComponent _render;
         private bool _isAttacking = false;
         private float _attackDuration = 0f;
-        private const float ATTACK_ANIMATION_DURATION = 0.8f; // 4 кадра * 0.2s на каждый кадр
+        private const float ATTACK_ANIMATION_DURATION = 0.4f; // 4 кадра * 0.2s на каждый кадр
 
         public AnimationComponent()
         {

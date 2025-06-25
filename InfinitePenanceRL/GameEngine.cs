@@ -59,6 +59,9 @@ namespace InfinitePenanceRL
         // Инициализация или перезапуск игры
         public void Initialize(Size initialViewportSize)
         {
+            // Загружаем сохраненные данные игрока
+            Player.LoadFromFile();
+            
             CurrentScene = new Scene(this);
             Camera = new Camera(initialViewportSize);
             UI = new UIManager(this);

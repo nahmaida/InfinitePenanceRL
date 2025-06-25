@@ -22,7 +22,7 @@
     {
         public static Entity CreatePlayer(GameEngine game)
         {
-            Console.WriteLine("Создаем игрока");
+            LogThrottler.Log("Создаем игрока", "player_creation");
             var player = new Entity
             {
                 Position = new Vector2(100, 100),
@@ -30,7 +30,7 @@
             };
 
             // Добавляем все нужные компоненты
-            var movement = new MovementComponent { Speed = 5f };
+            var movement = new MovementComponent { Speed = Player.Speed };
             var render = new RenderComponent
             {
                 Color = Color.Blue,
@@ -49,7 +49,7 @@
             player.AddComponent(playerTag);
             player.AddComponent(animation);
 
-            Console.WriteLine("Игрок создан со всеми компонентами");
+            LogThrottler.Log("Игрок создан со всеми компонентами", "player_creation");
             return player;
         }
 

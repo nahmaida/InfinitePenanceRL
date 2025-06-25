@@ -1,23 +1,26 @@
-﻿using System.Windows.Forms;
+using System.Windows.Forms;
+using System;
 
 namespace InfinitePenanceRL
 {
     // Компонент для движения персонажа (ходьба, бег и все такое)
     public class MovementComponent : Component
     {
-        // Базовая скорость перса
         public float Speed { get; set; } = 5f;
         private float _baseSpeed;
         private AnimationComponent _animation;
         private RenderComponent _render;
+        private bool _isInitialized = false;
 
         public override void Update()
         {
-            if (_animation == null)
+            if (!_isInitialized)
             {
                 _animation = Owner.GetComponent<AnimationComponent>();
                 _render = Owner.GetComponent<RenderComponent>();
-                _baseSpeed = Speed;
+                _baseSpeed = Player.Speed;
+                Speed = _baseSpeed;
+                _isInitialized = true;
             }
 
             var position = Owner.Position;
@@ -26,20 +29,20 @@ namespace InfinitePenanceRL
 
             // Проверяем, бежит ли перс (шифт нажат)
             bool isRunning = Game.Input.IsKeyDown(Keys.ShiftKey);
-            Speed = isRunning ? _baseSpeed * 2 : _baseSpeed;
+            float currentSpeed = isRunning ? _baseSpeed * 2 : _baseSpeed;
 
             // Обрабатываем движение
-            if (Game.Input.IsKeyDown(Keys.W)) { newPosition.Y -= Speed; isMoving = true; }
-            if (Game.Input.IsKeyDown(Keys.S)) { newPosition.Y += Speed; isMoving = true; }
+            if (Game.Input.IsKeyDown(Keys.W)) { newPosition.Y -= currentSpeed; isMoving = true; }
+            if (Game.Input.IsKeyDown(Keys.S)) { newPosition.Y += currentSpeed; isMoving = true; }
             if (Game.Input.IsKeyDown(Keys.A)) 
             { 
-                newPosition.X -= Speed; 
+                newPosition.X -= currentSpeed; 
                 isMoving = true;
                 if (_render != null) _render.FlipHorizontal = true; // Разворачиваем спрайт влево
             }
             if (Game.Input.IsKeyDown(Keys.D)) 
             { 
-                newPosition.X += Speed; 
+                newPosition.X += currentSpeed; 
                 isMoving = true;
                 if (_render != null) _render.FlipHorizontal = false; // Возвращаем спрайт вправо
             }
@@ -52,11 +55,11 @@ namespace InfinitePenanceRL
             // Анимации движения (ходьба/бег)
             else if (isMoving)
             {
-                _animation?.PlayAnimation(isRunning ? "running" : "walking");
+                _animation?.PlayAnimation("running"); // должно быть moving
             }
             else
             {
-                _animation?.PlayAnimation("idle");
+                _animation?.PlayAnimation("walking"); // должно быть idle
             }
 
             // Проверяем коллизии и двигаем персонажа

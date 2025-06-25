@@ -23,6 +23,9 @@ namespace InfinitePenanceRL
             this.MouseDown += MainForm_MouseDown;
             this.MouseUp += MainForm_MouseUp;
             this.KeyPreview = true;
+            
+            // Сохраняем данные игрока при закрытии игры
+            this.FormClosing += MainForm_FormClosing;
         }
 
         private void MainForm_MouseDown(object sender, MouseEventArgs e)
@@ -87,6 +90,19 @@ namespace InfinitePenanceRL
             base.OnKeyUp(e);
             _engine.Input.KeyUp(e.KeyCode);
             e.Handled = true;
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Обновляем позицию игрока в статических данных Player перед сохранением
+            var player = _engine.CurrentScene?.Entities.FirstOrDefault(entity => entity.GetComponent<PlayerTag>() != null);
+            if (player != null)
+            {
+                Player.Position = player.Position;
+            }
+            
+            // Сохраняем данные игрока
+            Player.SaveToFile();
         }
     }
 }

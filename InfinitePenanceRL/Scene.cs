@@ -159,19 +159,28 @@ namespace InfinitePenanceRL
             Point startPos = _mazeGenerator.GetStartPosition();
             var player = EntityFactory.CreatePlayer(_game);
             
-            // Вычисляем центр клетки с учётом размера игрока
-            var playerRender = player.GetComponent<RenderComponent>();
-            float playerWidth = playerRender.Size.Width;
-            float playerHeight = playerRender.Size.Height;
+            // Используем сохранённую позицию игрока, если она есть
+            if (Player.Position.X > 0 && Player.Position.Y > 0)
+            {
+                player.Position = Player.Position;
+            }
+            else
+            {
+                // Вычисляем центр клетки с учётом размера игрока
+                var playerRender = player.GetComponent<RenderComponent>();
+                float playerWidth = playerRender.Size.Width;
+                float playerHeight = playerRender.Size.Height;
+                
+                // Добавляем небольшой отступ от стен
+                float offsetX = CellSize * 0.1f; // Сдвигаем на 10% клетки вправо
+                float offsetY = CellSize * 0.1f; // Сдвигаем на 10% клетки вниз
+                
+                player.Position = new Vector2(
+                    startPos.X * CellSize + (CellSize - playerWidth) / 2 + offsetX,  // Центрируем + отступ
+                    startPos.Y * CellSize + (CellSize - playerHeight) / 2 + offsetY  // Центрируем + отступ
+                );
+            }
             
-            // Добавляем небольшой отступ от стен
-            float offsetX = CellSize * 0.1f; // Сдвигаем на 10% клетки вправо
-            float offsetY = CellSize * 0.1f; // Сдвигаем на 10% клетки вниз
-            
-            player.Position = new Vector2(
-                startPos.X * CellSize + (CellSize - playerWidth) / 2 + offsetX,  // Центрируем + отступ
-                startPos.Y * CellSize + (CellSize - playerHeight) / 2 + offsetY  // Центрируем + отступ
-            );
             AddEntity(player);
         }
 

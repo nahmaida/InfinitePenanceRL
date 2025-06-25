@@ -45,8 +45,8 @@ namespace InfinitePenanceRL
                 // Для игрока (и других объектов с регионом спрайта) используем реальный размер спрайта
                 if (render.SpriteRegion.HasValue)
                 {
-                    float width = render.SpriteRegion.Value.Width * render.Scale;
-                    float height = render.SpriteRegion.Value.Height * render.Scale;
+                    float width = render.SpriteRegion.Value.Width * render.Scale - 1;
+                    float height = render.SpriteRegion.Value.Height * render.Scale - 1;
 
                     _bounds = new RectangleF(
                         Owner.Position.X,
@@ -64,11 +64,11 @@ namespace InfinitePenanceRL
                 else
                 {
                     // Для остальных объектов используем размер из RenderComponent
-                    _bounds = new RectangleF(
-                        Owner.Position.X,
-                        Owner.Position.Y,
-                        render.Size.Width,
-                        render.Size.Height);
+                _bounds = new RectangleF(
+                    Owner.Position.X,
+                    Owner.Position.Y,
+                    render.Size.Width - 1,
+                    render.Size.Height - 1);
                 }
             }
         }
