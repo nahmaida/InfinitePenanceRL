@@ -83,6 +83,11 @@ namespace InfinitePenanceRL
 
             Physics.Update(CurrentScene);
 
+            // Логируем количество врагов и EnemyComponent
+            int enemyCount = CurrentScene.Entities.Count(e => e.GetComponent<EnemyComponent>() != null);
+            int enemyCompCount = CurrentScene.Entities.SelectMany(e => e.Components).OfType<EnemyComponent>().Count();
+            // LogThrottler.Log($"Врагов на сцене: {enemyCount}, EnemyComponent всего: {enemyCompCount}", "enemy_debug");
+
             // Обновляем все компоненты всех объектов
             foreach (var entity in CurrentScene.Entities)
             {
@@ -101,6 +106,9 @@ namespace InfinitePenanceRL
 
             // Убираем мёртвые объекты
             CurrentScene.CleanupMarkedEntities();
+
+            // Обновляем UI (например, полоску здоровья)
+            UI.Update();
         }
 
         // Отрисовка игры

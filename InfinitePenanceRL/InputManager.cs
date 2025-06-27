@@ -46,12 +46,8 @@ namespace InfinitePenanceRL
         // Проверка, нажата ли сейчас клавиша
         public bool IsKeyDown(Keys key)
         {
-            bool isDown = _pressedKeys.Contains(key);
-            if (isDown)
-            {
-                Log($"Клавиша нажата: {key}");
-            }
-            return isDown;
+            // Просто возвращаем состояние, не логируем
+            return _pressedKeys.Contains(key);
         }
 
         // Обработка нажатия кнопок мыши

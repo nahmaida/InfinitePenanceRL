@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace InfinitePenanceRL
 {
@@ -10,18 +11,25 @@ namespace InfinitePenanceRL
 
         public static void Log(string message, string category = "default")
         {
-            var now = DateTime.Now;
-            
-            if (_lastLogTimes.ContainsKey(category))
+            try
             {
-                if (now - _lastLogTimes[category] < _throttleInterval)
+                using (StreamWriter writer = File.AppendText("game.log"))
                 {
-                    return; // Скипаем запись в лог если не прошел интервал
+                    writer.WriteLine($"[{DateTime.Now:HH:mm:ss}] [{category}] {message}");
                 }
             }
-
-            _lastLogTimes[category] = now;
-            Console.WriteLine($"[{now:HH:mm:ss}] {message}");
+            catch (Exception ex)
+            {
+                // Если не удалось записать лог — пишем через RenderComponent.Log
+                try
+                {
+                    var rc = new InfinitePenanceRL.RenderComponent();
+                    rc.GetType().GetMethod("Log", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                        ?.Invoke(rc, new object[] { $"LogThrottler ERROR: {ex.Message}" });
+                }
+                catch { /* если и это не сработало — просто молчим */ }
+            }
         }
     }
 }
+

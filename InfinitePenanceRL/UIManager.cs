@@ -75,5 +75,14 @@ namespace InfinitePenanceRL
         {
             return _uiComponents.OfType<PauseMenuComponent>().FirstOrDefault();
         }
+
+        // Обновление всех UI-компонентов
+        public void Update()
+        {
+            foreach (var component in _uiComponents)
+            {
+                component.Update();
+            }
+        }
     }
 } 

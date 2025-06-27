@@ -39,13 +39,13 @@ namespace InfinitePenanceRL
 
             var screenPos = Owner.Game.Camera.WorldToScreen(Owner.Position);
 
-            // Only log position if it's changed significantly
-            if (!_hasLoggedInitial || Vector2.Distance(_lastLoggedPosition, Owner.Position) > 50)
-            {
-                Log($"Drawing {SpriteName} at {screenPos.X}, {screenPos.Y} with scale {Scale}");
-                _lastLoggedPosition = Owner.Position;
-                _hasLoggedInitial = true;
-            }
+            // пока не логируем
+            // if (!_hasLoggedInitial || Vector2.Distance(_lastLoggedPosition, Owner.Position) > 100)
+            // {
+            //     Log($"Drawing {SpriteName} at {screenPos.X}, {screenPos.Y} with scale {Scale}");
+            //     _lastLoggedPosition = Owner.Position;
+            //     _hasLoggedInitial = true;
+            // }
 
             if (!string.IsNullOrEmpty(SpriteName))
             {

@@ -16,6 +16,8 @@ namespace InfinitePenanceRL
                     ControlStyles.UserPaint |
                     ControlStyles.OptimizedDoubleBuffer, true);
 
+            LogThrottler.Log("Тест логирования", "test");
+
             _engine = new GameEngine(this);
             SubscribePauseMenuEvents();
             
