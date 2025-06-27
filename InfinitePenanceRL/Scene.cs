@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace InfinitePenanceRL
 {
@@ -160,11 +162,13 @@ namespace InfinitePenanceRL
             var player = EntityFactory.CreatePlayer(_game);
             
             // Используем сохранённую позицию игрока, если она есть
+            /*
             if (Player.Position.X > 0 && Player.Position.Y > 0)
             {
                 player.Position = Player.Position;
             }
             else
+            */
             {
                 // Вычисляем центр клетки с учётом размера игрока
                 var playerRender = player.GetComponent<RenderComponent>();
@@ -182,6 +186,9 @@ namespace InfinitePenanceRL
             }
             
             AddEntity(player);
+
+            // Спавним врагов в случайных проходах
+            SpawnEnemies();
         }
 
         // Добавляем новую сущность на сцену
@@ -195,6 +202,65 @@ namespace InfinitePenanceRL
         public bool IsWalkable(int x, int y)
         {
             return _mazeGenerator.IsWalkable(_mazeLayout, x, y);
+        }
+
+        // Удаляем все объекты, помеченные для удаления
+        public void CleanupMarkedEntities()
+        {
+            var entitiesToRemove = Entities.Where(e => e.IsMarkedForDeletion).ToList();
+            foreach (var entity in entitiesToRemove)
+            {
+                Entities.Remove(entity);
+                LogThrottler.Log($"Removed entity at position {entity.Position.X}, {entity.Position.Y}", "entity_cleanup");
+            }
+        }
+
+        // Спавним врагов в случайных проходах лабиринта
+        private void SpawnEnemies()
+        {
+            var random = new System.Random();
+            var walkableCells = new List<Point>();
+
+            // Находим все проходимые клетки
+            for (int x = 0; x < _mazeLayout.GetLength(0); x++)
+            {
+                for (int y = 0; y < _mazeLayout.GetLength(1); y++)
+                {
+                    if (_mazeLayout[x, y]) // Если клетка проходима
+                    {
+                        walkableCells.Add(new Point(x, y));
+                    }
+                }
+            }
+
+            // Спавним врагов (примерно 1 враг на 20 проходимых клеток)
+            int enemyCount = walkableCells.Count / 20;
+            enemyCount = Math.Max(1, Math.Min(enemyCount, 10)); // Минимум 1, максимум 10 врагов
+
+            for (int i = 0; i < enemyCount; i++)
+            {
+                if (walkableCells.Count == 0) break;
+
+                // Выбираем случайную клетку
+                int randomIndex = random.Next(walkableCells.Count);
+                var cellPos = walkableCells[randomIndex];
+                walkableCells.RemoveAt(randomIndex); // Убираем из списка, чтобы не спавнить дважды в одном месте
+
+                // Создаём врага
+                var enemy = EntityFactory.CreateEnemy(_game);
+                
+                // Размещаем врага в центре клетки с небольшим случайным смещением
+                float offsetX = (random.NextSingle() - 0.5f) * CellSize * 0.3f; // Случайное смещение до 30% размера клетки
+                float offsetY = (random.NextSingle() - 0.5f) * CellSize * 0.3f;
+                
+                enemy.Position = new Vector2(
+                    cellPos.X * CellSize + CellSize / 2 + offsetX,
+                    cellPos.Y * CellSize + CellSize / 2 + offsetY
+                );
+
+                AddEntity(enemy);
+                LogThrottler.Log($"Spawned enemy at {enemy.Position.X}, {enemy.Position.Y}", "enemy_spawn");
+            }
         }
     }
 }

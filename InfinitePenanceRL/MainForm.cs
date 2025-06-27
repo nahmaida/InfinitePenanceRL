@@ -95,6 +95,7 @@ namespace InfinitePenanceRL
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             // Обновляем позицию игрока в статических данных Player перед сохранением
+            /*
             var player = _engine.CurrentScene?.Entities.FirstOrDefault(entity => entity.GetComponent<PlayerTag>() != null);
             if (player != null)
             {
@@ -103,6 +104,8 @@ namespace InfinitePenanceRL
             
             // Сохраняем данные игрока
             Player.SaveToFile();
+            */
+            // Сохранение/загрузка временно отключены для автогенерации карт
         }
     }
 }

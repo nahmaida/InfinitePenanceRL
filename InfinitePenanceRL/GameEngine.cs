@@ -60,7 +60,7 @@ namespace InfinitePenanceRL
         public void Initialize(Size initialViewportSize)
         {
             // Загружаем сохраненные данные игрока
-            Player.LoadFromFile();
+            // Player.LoadFromFile(); // Временно отключено для автогенерации карт
             
             CurrentScene = new Scene(this);
             Camera = new Camera(initialViewportSize);
@@ -96,6 +96,9 @@ namespace InfinitePenanceRL
             {
                 Camera.CenterOn(player.Position, WorldSize);
             }
+
+            // Убираем мёртвые объекты
+            CurrentScene.CleanupMarkedEntities();
         }
 
         // Отрисовка игры

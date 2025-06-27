@@ -47,13 +47,8 @@ namespace InfinitePenanceRL
                 if (_render != null) _render.FlipHorizontal = false; // Возвращаем спрайт вправо
             }
 
-            // Анимация атаки по клику мыши
-            if (Game.Input.IsLeftMouseDown())
-            {
-                _animation?.PlayAnimation("attacking");
-            }
             // Анимации движения (ходьба/бег)
-            else if (isMoving)
+            if (isMoving)
             {
                 _animation?.PlayAnimation("running"); // должно быть moving
             }

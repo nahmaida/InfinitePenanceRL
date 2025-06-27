@@ -9,6 +9,7 @@ namespace InfinitePenanceRL
         public Vector2 Position { get; set; }  // Позиция объекта в игровом мире
         public List<Component> Components { get; } = new List<Component>();  // Список компонентов объекта
         public GameEngine Game { get; set; }  // Ссылка на игровой движок
+        public bool IsMarkedForDeletion { get; private set; } = false;  // Помечен ли объект для удаления
 
         // Ищем компонент нужного типа (например, для отрисовки или физики)
         public T GetComponent<T>() where T : Component
@@ -21,6 +22,12 @@ namespace InfinitePenanceRL
         {
             component.Owner = this;
             Components.Add(component);
+        }
+
+        // Помечаем объект для удаления
+        public void MarkForDeletion()
+        {
+            IsMarkedForDeletion = true;
         }
     }
 }

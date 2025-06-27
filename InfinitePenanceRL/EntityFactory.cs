@@ -1,4 +1,6 @@
-﻿namespace InfinitePenanceRL
+﻿using System.Drawing;
+
+namespace InfinitePenanceRL
 {
     public enum WallType
     {
@@ -42,12 +44,14 @@
             var collider = new ColliderComponent();
             var playerTag = new PlayerTag();
             var animation = new AnimationComponent();
+            var attack = new AttackComponent();
 
             player.AddComponent(movement);
             player.AddComponent(render);
             player.AddComponent(collider);
             player.AddComponent(playerTag);
             player.AddComponent(animation);
+            player.AddComponent(attack);
 
             LogThrottler.Log("Игрок создан со всеми компонентами", "player_creation");
             return player;
@@ -103,6 +107,44 @@
         public static Entity CreateWall(GameEngine game)
         {
             return CreateWall(game, WallType.Middle);
+        }
+
+        public static Entity CreateEnemy(GameEngine game)
+        {
+            LogThrottler.Log("Создаем врага", "enemy_creation");
+            var enemy = new Entity
+            {
+                Position = new Vector2(200, 200), // Временная позиция, будет изменена при спавне
+                Game = game
+            };
+
+            // Добавляем компоненты врага
+            var enemyComponent = new EnemyComponent
+            {
+                Health = 50f,
+                MaxHealth = 50f,
+                Attack = 15f,
+                Speed = 3f
+            };
+
+            var render = new RenderComponent
+            {
+                Color = Color.White,
+                Size = new Size(24, 24),
+                SpriteName = "", // Пустое имя спрайта = белый квадрат
+                Scale = 1.0f
+            };
+
+            var collider = new ColliderComponent();
+            var enemyTag = new EnemyTag();
+
+            enemy.AddComponent(enemyComponent);
+            enemy.AddComponent(render);
+            enemy.AddComponent(collider);
+            enemy.AddComponent(enemyTag);
+
+            LogThrottler.Log("Враг создан со всеми компонентами", "enemy_creation");
+            return enemy;
         }
     }
 
