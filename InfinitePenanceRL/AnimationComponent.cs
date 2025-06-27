@@ -20,7 +20,7 @@ namespace InfinitePenanceRL
         private RenderComponent _render;
         private bool _isAttacking = false;
         private float _attackDuration = 0f;
-        private const float ATTACK_ANIMATION_DURATION = 0.4f; // 4 кадра * 0.2s на каждый кадр
+        private const float ATTACK_ANIMATION_DURATION = 0.4f; // 4 кадра * 0.1s на каждый кадр
 
         public AnimationComponent()
         {

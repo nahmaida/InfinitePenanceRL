@@ -10,7 +10,7 @@ namespace InfinitePenanceRL
 
         private static readonly System.Random _random = new System.Random();
         private float _moveTimer = 0f;
-        private float _moveInterval = 1.0f; // seconds
+        private float _moveInterval = 1.0f; // секунды
         private Vector2 _moveDirection = new Vector2(0, 0);
 
         public void TakeDamage(float damage)
@@ -21,7 +21,7 @@ namespace InfinitePenanceRL
             if (IsDead)
             {
                 LogThrottler.Log("Enemy defeated!", "enemy_defeat");
-                // Mark entity for deletion
+                // Удаляем врага
                 Owner.MarkForDeletion();
             }
         }
@@ -30,28 +30,28 @@ namespace InfinitePenanceRL
         {
             if (IsDead) return;
 
-            // Update timer
-            _moveTimer += 1.0f / 60.0f; // Assuming 60 FPS
+            // Обновляем таймер
+            _moveTimer += 1.0f / 60.0f; // При 60 фпс
             if (_moveTimer >= _moveInterval)
             {
                 _moveTimer = 0f;
-                // Pick a random direction: up, down, left, right, or stay
+                // Выбираем рандомное направление
                 int dir = _random.Next(5);
                 switch (dir)
                 {
-                    case 0: _moveDirection = new Vector2(0, -1); break; // Up
-                    case 1: _moveDirection = new Vector2(0, 1); break;  // Down
-                    case 2: _moveDirection = new Vector2(-1, 0); break; // Left
-                    case 3: _moveDirection = new Vector2(1, 0); break;  // Right
-                    default: _moveDirection = new Vector2(0, 0); break; // Stay
+                    case 0: _moveDirection = new Vector2(0, -1); break; // Вверх
+                    case 1: _moveDirection = new Vector2(0, 1); break;  // Вниз
+                    case 2: _moveDirection = new Vector2(-1, 0); break; // Влево
+                    case 3: _moveDirection = new Vector2(1, 0); break;  // Вправо
+                    default: _moveDirection = new Vector2(0, 0); break; // Никуда
                 }
             }
 
             if (_moveDirection.X != 0 || _moveDirection.Y != 0)
             {
                 var newPos = Owner.Position + _moveDirection * Speed;
-                // Convert to maze cell coordinates
-                int cellX = (int)((newPos.X + 16) / Scene.CellSize); // 16: half tile offset
+                // Конвертируем в координаты
+                int cellX = (int)((newPos.X + 16) / Scene.CellSize); // 16 (половина тайла)
                 int cellY = (int)((newPos.Y + 16) / Scene.CellSize);
                 if (Owner.Game.CurrentScene.IsWalkable(cellX, cellY) && Owner.Game.Physics.CanMoveTo(Owner, newPos))
                 {
@@ -61,6 +61,6 @@ namespace InfinitePenanceRL
         }
     }
 
-    // Marker component to identify enemies
+    // Маркер для врагов
     public class EnemyTag : Component { }
 }
