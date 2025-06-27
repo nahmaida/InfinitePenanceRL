@@ -14,11 +14,9 @@ namespace InfinitePenanceRL
         public static List<InventoryItem> Inventory { get; set; } = new List<InventoryItem>();
         public static Vector2 Position { get; set; } = new Vector2(100, 100);
 
-        private const string SaveFilePath = "player_save.json";
-
-        public static void SaveToFile()
+        public static PlayerData GetSaveData()
         {
-            var playerData = new PlayerData
+            return new PlayerData
             {
                 Health = Health,
                 Damage = Damage,
@@ -34,51 +32,40 @@ namespace InfinitePenanceRL
                     SpriteName = item.SpriteName
                 }).ToList()
             };
-
-            string json = JsonSerializer.Serialize(playerData);
-            File.WriteAllText(SaveFilePath, json);
         }
 
-        public static void LoadFromFile()
+        public static void LoadFromSaveData(PlayerData data)
         {
-            if (File.Exists(SaveFilePath))
+            if (data == null) return;
+            Health = data.Health;
+            Damage = data.Damage;
+            Speed = data.Speed;
+            Position = new Vector2(data.PositionX, data.PositionY);
+            Inventory = data.Inventory.Select(d => new InventoryItem(d.Name, Color.FromArgb(d.ColorArgb))
             {
-                string json = File.ReadAllText(SaveFilePath);
-                var playerData = JsonSerializer.Deserialize<PlayerData>(json);
-
-                if (playerData != null)
-                {
-                    Health = playerData.Health;
-                    Damage = playerData.Damage;
-                    Speed = playerData.Speed;
-                    Position = new Vector2(playerData.PositionX, playerData.PositionY);
-                    Inventory = playerData.Inventory.Select(data => new InventoryItem(data.Name, Color.FromArgb(data.ColorArgb))
-                    {
-                        Count = data.Count,
-                        IsStackable = data.IsStackable,
-                        SpriteName = data.SpriteName
-                    }).ToList();
-                }
-            }
+                Count = d.Count,
+                IsStackable = d.IsStackable,
+                SpriteName = d.SpriteName
+            }).ToList();
         }
-    }
 
-    public class PlayerData
-    {
-        public float Health { get; set; }
-        public float Damage { get; set; }
-        public float Speed { get; set; }
-        public float PositionX { get; set; }
-        public float PositionY { get; set; }
-        public List<InventoryItemData> Inventory { get; set; } = new List<InventoryItemData>();
-    }
+        public class PlayerData
+        {
+            public float Health { get; set; }
+            public float Damage { get; set; }
+            public float Speed { get; set; }
+            public float PositionX { get; set; }
+            public float PositionY { get; set; }
+            public List<InventoryItemData> Inventory { get; set; } = new List<InventoryItemData>();
+        }
 
-    public class InventoryItemData
-    {
-        public string Name { get; set; } = "";
-        public int Count { get; set; } = 1;
-        public int ColorArgb { get; set; }
-        public bool IsStackable { get; set; } = true;
-        public string SpriteName { get; set; } = "";
+        public class InventoryItemData
+        {
+            public string Name { get; set; } = "";
+            public int Count { get; set; } = 1;
+            public int ColorArgb { get; set; }
+            public bool IsStackable { get; set; } = true;
+            public string SpriteName { get; set; } = "";
+        }
     }
 }

@@ -46,6 +46,11 @@ namespace InfinitePenanceRL
             // Добавляем компоненты в список для отрисовки
             _uiComponents.Add(healthBar);
             _uiComponents.Add(inventory);
+
+            // Создаем меню паузы
+            var pauseMenu = new PauseMenuComponent { ScreenPosition = new Vector2(0, 0), IsVisible = true };
+            _uiEntity.AddComponent(pauseMenu);
+            _uiComponents.Add(pauseMenu);
         }
 
         // Отрисовка всех видимых элементов интерфейса
@@ -64,6 +69,11 @@ namespace InfinitePenanceRL
         public T GetComponent<T>() where T : UIComponent
         {
             return _uiComponents.OfType<T>().FirstOrDefault();
+        }
+
+        public PauseMenuComponent GetPauseMenu()
+        {
+            return _uiComponents.OfType<PauseMenuComponent>().FirstOrDefault();
         }
     }
 } 

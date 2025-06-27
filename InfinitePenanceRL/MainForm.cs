@@ -17,6 +17,7 @@ namespace InfinitePenanceRL
                     ControlStyles.OptimizedDoubleBuffer, true);
 
             _engine = new GameEngine(this);
+            SubscribePauseMenuEvents();
             
             // Отслеживание движения мыши
             this.MouseMove += MainForm_MouseMove;
@@ -28,8 +29,64 @@ namespace InfinitePenanceRL
             this.FormClosing += MainForm_FormClosing;
         }
 
+        private void SubscribePauseMenuEvents()
+        {
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            if (pauseMenu != null)
+            {
+                // Просто подписываемся на события, не трогаем null
+                pauseMenu.OnButtonPressed += (action) =>
+                {
+                    if (action == PauseMenuAction.Resume) _engine.TogglePause();
+                    else if (action == PauseMenuAction.Exit) _engine.ExitGame();
+                    Invalidate();
+                };
+                pauseMenu.SaveRequested += (filename) =>
+                {
+                    _engine.SaveGameToFile(filename);
+                    Invalidate();
+                };
+                pauseMenu.LoadRequested += (filename) =>
+                {
+                    _engine.LoadGameFromFile(filename);
+                    Invalidate();
+                };
+            }
+        }
+
         private void MainForm_MouseDown(object sender, MouseEventArgs e)
         {
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            // Если меню паузы активно, обрабатываем клик по кнопкам меню
+            if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive)
+            {
+                int width = 300, height = 300;
+                int x = (this.ClientSize.Width - width) / 2;
+                int y = (this.ClientSize.Height - height) / 2;
+                // Если сейчас открыт список сохранений — кликаем по файлам
+                if (typeof(PauseMenuComponent).GetField("_showLoadList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(pauseMenu) is bool showLoadList && showLoadList)
+                {
+                    pauseMenu.HandleMouseClick(e.X, e.Y, x, y);
+                    Invalidate();
+                    return;
+                }
+                // Кнопки идут вертикально, высота кнопки 50, первая кнопка сдвинута на 80 пикселей вниз
+                for (int i = 0; i < 4; i++)
+                {
+                    int btnY = y + 80 + i * 50;
+                    Rectangle btnRect = new Rectangle(x + 100, btnY, 120, 40); // ширина 120, высота 40
+                    if (btnRect.Contains(e.Location))
+                    {
+                        // Выделяем нужную кнопку и жмём её
+                        typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
+                        pauseMenu.PressButton();
+                        Invalidate();
+                        return;
+                    }
+                }
+                // Если клик вне кнопок — ничего не делаем
+                return;
+            }
             _engine.Input.MouseDown(e.Button);
         }
 
@@ -51,12 +108,19 @@ namespace InfinitePenanceRL
         private void MainForm_Load(object sender, EventArgs e)
         {
             _engine.Initialize(this.ClientSize);
+            SubscribePauseMenuEvents();
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
             _engine.Render(e.Graphics);
+            // Рисуем меню паузы
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            if (pauseMenu != null && pauseMenu.IsActive)
+            {
+                pauseMenu.Draw(e.Graphics);
+            }
         }
 
         protected override void OnResize(EventArgs e)
@@ -80,9 +144,110 @@ namespace InfinitePenanceRL
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive)
+            {
+                if (pauseMenu.IsAwaitingInput())
+                {
+                    if (e.KeyCode == Keys.Escape)
+                    {
+                        pauseMenu.CancelInput();
+                        Invalidate();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (pauseMenu.IsAwaitingInput() && e.KeyCode == Keys.Back)
+                    {
+                        pauseMenu.Backspace();
+                        Invalidate();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (pauseMenu.IsAwaitingInput() && e.KeyCode == Keys.Enter)
+                    {
+                        pauseMenu.PressButton();
+                        Invalidate();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (pauseMenu.IsAwaitingInput() && pauseMenu.IsAwaitingInput() && e.KeyCode == Keys.Up)
+                    {
+                        pauseMenu.PrevButton();
+                        Invalidate();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (pauseMenu.IsAwaitingInput() && pauseMenu.IsAwaitingInput() && e.KeyCode == Keys.Down)
+                    {
+                        pauseMenu.NextButton();
+                        Invalidate();
+                        e.Handled = true;
+                        return;
+                    }
+                }
+                if (e.KeyCode == Keys.Escape)
+                {
+                    _engine.TogglePause();
+                    e.Handled = true;
+                    return;
+                }
+                if (e.KeyCode == Keys.Up)
+                {
+                    pauseMenu.PrevButton();
+                    Invalidate();
+                }
+                else if (e.KeyCode == Keys.Down)
+                {
+                    pauseMenu.NextButton();
+                    Invalidate();
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    pauseMenu.PressButton();
+                    Invalidate();
+                }
+                e.Handled = true;
+                return;
+            }
+            if (e.KeyCode == Keys.Escape)
+            {
+                _engine.TogglePause();
+                e.Handled = true;
+                return;
+            }
             _engine.Input.KeyDown(e.KeyCode);
             e.Handled = true;
             e.SuppressKeyPress = true;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive && pauseMenu.IsAwaitingInput())
+            {
+                if (keyData >= Keys.A && keyData <= Keys.Z)
+                {
+                    char c = (char)keyData;
+                    if (!Control.IsKeyLocked(Keys.CapsLock)) c = char.ToLower(c);
+                    pauseMenu.InputChar(c);
+                    Invalidate();
+                    return true;
+                }
+                if (keyData >= Keys.D0 && keyData <= Keys.D9)
+                {
+                    char c = (char)('0' + (keyData - Keys.D0));
+                    pauseMenu.InputChar(c);
+                    Invalidate();
+                    return true;
+                }
+                if (keyData == Keys.Space)
+                {
+                    pauseMenu.InputChar(' ');
+                    Invalidate();
+                    return true;
+                }
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         protected override void OnKeyUp(KeyEventArgs e)

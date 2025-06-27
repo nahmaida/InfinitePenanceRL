@@ -262,5 +262,49 @@ namespace InfinitePenanceRL
                 LogThrottler.Log($"Spawned enemy at {enemy.Position.X}, {enemy.Position.Y}", "enemy_spawn");
             }
         }
+
+        public class MazeSaveData
+        {
+            public bool[][] MazeLayout { get; set; } // теперь это массив массивов
+        }
+
+        // Преобразуем bool[,] в bool[][]
+        private static bool[][] ToJaggedArray(bool[,] array)
+        {
+            int rows = array.GetLength(0);
+            int cols = array.GetLength(1);
+            var jagged = new bool[rows][];
+            for (int i = 0; i < rows; i++)
+            {
+                jagged[i] = new bool[cols];
+                for (int j = 0; j < cols; j++)
+                    jagged[i][j] = array[i, j];
+            }
+            return jagged;
+        }
+
+        // Преобразуем bool[][] обратно в bool[,]
+        private static bool[,] To2DArray(bool[][] jagged)
+        {
+            int rows = jagged.Length;
+            int cols = jagged[0].Length;
+            var array = new bool[rows, cols];
+            for (int i = 0; i < rows; i++)
+                for (int j = 0; j < cols; j++)
+                    array[i, j] = jagged[i][j];
+            return array;
+        }
+
+        public MazeSaveData GetMazeSaveData()
+        {
+            return new MazeSaveData { MazeLayout = ToJaggedArray(_mazeLayout) };
+        }
+
+        public void LoadMazeSaveData(MazeSaveData data)
+        {
+            if (data == null || data.MazeLayout == null) return;
+            _mazeLayout = To2DArray(data.MazeLayout);
+            CreateMazeEntities();
+        }
     }
 }

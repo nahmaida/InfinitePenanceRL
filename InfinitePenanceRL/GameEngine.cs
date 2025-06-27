@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
 
 namespace InfinitePenanceRL
 {
@@ -110,6 +112,77 @@ namespace InfinitePenanceRL
                 RenderSystem.Render(graphics, this, CurrentScene.Entities);  // Рисуем игровые объекты
                 UI.Draw(graphics);  // Рисуем интерфейс поверх всего
             }
+        }
+
+        public void TogglePause()
+        {
+            if (State == GameState.Playing)
+            {
+                State = GameState.Paused;
+                var pauseMenu = UI.GetPauseMenu();
+                if (pauseMenu != null) pauseMenu.IsActive = true;
+            }
+            else if (State == GameState.Paused)
+            {
+                State = GameState.Playing;
+                var pauseMenu = UI.GetPauseMenu();
+                if (pauseMenu != null) pauseMenu.IsActive = false;
+            }
+        }
+
+        public void SaveGame()
+        {
+            var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+            if (player != null)
+            {
+                Player.Position = player.Position;
+            }
+        }
+
+        public void ExitGame()
+        {
+            Application.Exit();
+        }
+
+        public void SaveGameToFile(string filename)
+        {
+            Directory.CreateDirectory("saves");
+            var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+            if (player != null)
+            {
+                Player.Position = player.Position;
+            }
+            var saveData = new FullSaveData
+            {
+                Player = Player.GetSaveData(),
+                Maze = CurrentScene.GetMazeSaveData(),
+            };
+            string json = JsonSerializer.Serialize(saveData, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(Path.Combine("saves", filename), json);
+        }
+
+        public void LoadGameFromFile(string filename)
+        {
+            string path = Path.Combine("saves", filename);
+            if (!File.Exists(path)) return;
+            string json = File.ReadAllText(path);
+            var saveData = JsonSerializer.Deserialize<FullSaveData>(json);
+            if (saveData != null)
+            {
+                Player.LoadFromSaveData(saveData.Player);
+                CurrentScene.LoadMazeSaveData(saveData.Maze);
+                var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+                if (player != null)
+                {
+                    player.Position = Player.Position;
+                }
+            }
+        }
+
+        public class FullSaveData
+        {
+            public Player.PlayerData Player { get; set; }
+            public Scene.MazeSaveData Maze { get; set; } // теперь MazeLayout это bool[][]
         }
     }
 
