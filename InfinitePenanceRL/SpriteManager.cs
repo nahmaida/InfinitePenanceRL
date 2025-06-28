@@ -117,8 +117,8 @@ namespace InfinitePenanceRL
                 {
                     Log($"ОШИБКА при отрисовке спрайта {spriteName}: {ex.Message}");
                     _loggedSprites.Add(spriteName);
-                }
             }
+        }
         }
 
         // Определяем, какой спрайтшит использовать для спрайта

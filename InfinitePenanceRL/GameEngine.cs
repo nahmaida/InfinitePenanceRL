@@ -38,8 +38,8 @@ namespace InfinitePenanceRL
         private System.Windows.Forms.Timer gameTimer;  // Таймер для обновления игры
         private MainForm mainForm;  // Главное окно игры
         private const int TARGET_FPS = 60;  // Целевой FPS
-        private const int MAZE_WIDTH = 41;  // Ширина лабиринта (4000/96 округлено вниз)
-        private const int MAZE_HEIGHT = 41;  // Высота лабиринта (4000/96 округлено вниз)
+        private const int MAZE_WIDTH = 51;  // Ширина подземелья (увеличено для комнат и коридоров)
+        private const int MAZE_HEIGHT = 51;  // Высота подземелья (увеличено для комнат и коридоров)
         private List<Entity> _entitiesToDelete = new List<Entity>(); // Список сущностей для удаления
         private bool _shouldProcessDeletions = false; // Флаг для обработки удалений в следующем кадре
         private List<Entity> _projectiles = new List<Entity>(); // Отдельный список для снарядов

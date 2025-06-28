@@ -86,12 +86,12 @@ namespace InfinitePenanceRL
                         // Музыка: 4 кнопки с точными позициями
                         int[] musicButtonYPositions = { 80, 120, 160, 200 }; // Точные Y позиции из PauseMenuComponent
                         
-                        for (int i = 0; i < 4; i++)
-                        {
+                for (int i = 0; i < 4; i++)
+                {
                             int btnY = y + musicButtonYPositions[i];
                             Rectangle btnRect = new Rectangle(x + 20, btnY, 260, 30); // Высота 30 для точности
-                            if (btnRect.Contains(e.Location))
-                            {
+                    if (btnRect.Contains(e.Location))
+                    {
                                 typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
                                 pauseMenu.PressButton();
                                 Invalidate();
@@ -112,12 +112,12 @@ namespace InfinitePenanceRL
                         Rectangle btnRect = new Rectangle(x + 20, btnY, 260, 30); // Высота 30 для точности
                         if (btnRect.Contains(e.Location))
                         {
-                            typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
-                            pauseMenu.PressButton();
-                            Invalidate();
-                            return;
-                        }
+                        typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
+                        pauseMenu.PressButton();
+                        Invalidate();
+                        return;
                     }
+                }
                 }
                 
                 // Если клик вне кнопок — ничего не делаем

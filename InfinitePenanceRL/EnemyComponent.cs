@@ -112,7 +112,7 @@ namespace InfinitePenanceRL
                     }
                 }
                 else if (straightLine && dist > _attackRange)
-                {
+            {
                     var dir = (player.Position - Owner.Position).Normalize();
                     var newPos = Owner.Position + dir * Speed;
                     int cellX = (int)((newPos.X + 16) / Scene.CellSize);
@@ -133,27 +133,27 @@ namespace InfinitePenanceRL
                 {
                     _moveTimer = 0f;
                     int dir = _random.Next(5);
-                    switch (dir)
-                    {
+                switch (dir)
+                {
                         case 0: _moveDirection = new Vector2(0, -1); break;
                         case 1: _moveDirection = new Vector2(0, 1); break;
                         case 2: _moveDirection = new Vector2(-1, 0); break;
                         case 3: _moveDirection = new Vector2(1, 0); break;
                         default: _moveDirection = new Vector2(0, 0); break;
-                    }
                 }
-                if (_moveDirection.X != 0 || _moveDirection.Y != 0)
-                {
-                    var newPos = Owner.Position + _moveDirection * Speed;
+            }
+            if (_moveDirection.X != 0 || _moveDirection.Y != 0)
+            {
+                var newPos = Owner.Position + _moveDirection * Speed;
                     int cellX = (int)((newPos.X + 16) / Scene.CellSize);
-                    int cellY = (int)((newPos.Y + 16) / Scene.CellSize);
-                    if (Owner.Game.CurrentScene.IsWalkable(cellX, cellY) && Owner.Game.Physics.CanMoveTo(Owner, newPos))
-                    {
-                        Owner.Position = newPos;
+                int cellY = (int)((newPos.Y + 16) / Scene.CellSize);
+                if (Owner.Game.CurrentScene.IsWalkable(cellX, cellY) && Owner.Game.Physics.CanMoveTo(Owner, newPos))
+                {
+                    Owner.Position = newPos;
                         isMoving = true;
                         moveDirection = _moveDirection;
-                    }
                 }
+            }
             }
 
             // Управляем анимацией
