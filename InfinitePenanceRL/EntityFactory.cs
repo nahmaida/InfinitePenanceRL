@@ -35,7 +35,7 @@ namespace InfinitePenanceRL
             var movement = new MovementComponent { Speed = Player.Speed };
             var render = new RenderComponent
             {
-                Color = Color.Blue,
+                Color = Color.White,
                 Size = new Size(32, 32),  // 2x от размера спрайта (16px)
                 SpriteName = "player",
                 Scale = 2.0f

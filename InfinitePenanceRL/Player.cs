@@ -22,6 +22,9 @@ namespace InfinitePenanceRL
         public static int CurrentKills { get; set; } = 0;
         public static bool CanLevelUp { get; set; } = false;
         
+        // система оружия
+        public static float WeaponDamageBonus { get; set; } = 0f; // бонус урона от оружия
+        
         // таймер для регенерации здоровья
         private static float regenerationTimer = 0f;
         private static float regenerationInterval = 1f; // 1 секунда
@@ -85,6 +88,12 @@ namespace InfinitePenanceRL
             }
         }
 
+        // получаем общий урон (базовый + от оружия)
+        public static float GetTotalDamage()
+        {
+            return Damage + WeaponDamageBonus;
+        }
+
         public static PlayerData GetSaveData()
         {
             return new PlayerData
@@ -99,6 +108,7 @@ namespace InfinitePenanceRL
                 Experience = Experience,
                 KillsForNextLevel = KillsForNextLevel,
                 CurrentKills = CurrentKills,
+                WeaponDamageBonus = WeaponDamageBonus,
                 Inventory = Inventory.Select(item => new InventoryItemData
                 {
                     Name = item.Name,
@@ -122,6 +132,7 @@ namespace InfinitePenanceRL
             Experience = data.Experience;
             KillsForNextLevel = data.KillsForNextLevel;
             CurrentKills = data.CurrentKills;
+            WeaponDamageBonus = data.WeaponDamageBonus;
             Inventory = data.Inventory.Select(d => new InventoryItem(d.Name, Color.FromArgb(d.ColorArgb))
             {
                 Count = d.Count,
@@ -142,6 +153,7 @@ namespace InfinitePenanceRL
             public int Experience { get; set; }
             public int KillsForNextLevel { get; set; }
             public int CurrentKills { get; set; }
+            public float WeaponDamageBonus { get; set; }
             public List<InventoryItemData> Inventory { get; set; } = new List<InventoryItemData>();
         }
 

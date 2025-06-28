@@ -36,8 +36,8 @@ namespace InfinitePenanceRL
             };
 
             // Добавляем тестовые предметы в инвентарь
-            inventory.AddItem(new InventoryItem("Зелье", Color.Red) { Count = 3, SpriteName = "potion" });  // Три зелья лечения
-            inventory.AddItem(new InventoryItem("Меч", Color.LightBlue) { SpriteName = "sword" });  // Один меч
+            inventory.AddItem(new InventoryItem("Зелье лечения", Color.Red) { Count = 3, SpriteName = "potion", Type = ItemType.Potion, Selectable = false });  // Три зелья лечения
+            inventory.AddItem(new InventoryItem("Меч", Color.LightBlue) { SpriteName = "sword", Type = ItemType.Weapon, Selectable = true });  // Один меч
 
             // Система прокачки
             var levelingUI = new LevelingUIComponent();

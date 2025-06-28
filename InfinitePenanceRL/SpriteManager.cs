@@ -11,7 +11,7 @@ namespace InfinitePenanceRL
         private readonly Dictionary<string, Rectangle> _spriteRegions = new Dictionary<string, Rectangle>();
         private const int TILE_SIZE = 16;
         private HashSet<string> _loggedSprites = new HashSet<string>();
-
+        
         private void Log(string message)
         {
             using (StreamWriter writer = File.AppendText("game.log"))
@@ -117,8 +117,8 @@ namespace InfinitePenanceRL
                 {
                     Log($"ОШИБКА при отрисовке спрайта {spriteName}: {ex.Message}");
                     _loggedSprites.Add(spriteName);
+                }
             }
-        }
         }
 
         // Определяем, какой спрайтшит использовать для спрайта

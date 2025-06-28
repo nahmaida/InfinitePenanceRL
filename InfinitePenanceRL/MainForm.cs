@@ -132,6 +132,20 @@ namespace InfinitePenanceRL
                 // Если клик вне кнопок — ничего не делаем
                 return;
             }
+            
+            // проверяем инвентарь для кликов по предметам
+            var inventory = _engine.UI.GetComponent<InventoryComponent>();
+            if (inventory != null && e.Button == MouseButtons.Left)
+            {
+                // проверяем, что клик действительно по инвентарю
+                if (inventory.IsMouseOverInventory(e.Location))
+                {
+                    inventory.HandleClick(e.Location);
+                    Invalidate();
+                    return;
+                }
+            }
+            
             _engine.Input.MouseDown(e.Button);
         }
 

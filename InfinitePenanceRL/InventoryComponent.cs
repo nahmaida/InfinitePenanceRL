@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System;
 
 namespace InfinitePenanceRL
 {
@@ -15,6 +16,22 @@ namespace InfinitePenanceRL
         public void UpdateMousePosition(Point mousePosition)
         {
             _mousePosition = mousePosition;
+        }
+
+        public bool IsMouseOverInventory(Point mousePosition)
+        {
+            for (int i = 0; i < SlotCount; i++)
+            {
+                float x = ScreenPosition.X + i * (SlotSize + Spacing);
+                float y = ScreenPosition.Y;
+                var slotBounds = new RectangleF(x, y, SlotSize, SlotSize);
+
+                if (slotBounds.Contains(mousePosition))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private int GetHoveredSlotIndex()
@@ -49,8 +66,11 @@ namespace InfinitePenanceRL
                 // Вещи в инвентаре
                 if (i < Items.Count && Items[i] != null)
                 {
+                    // определяем цвет фона (выбранный предмет имеет желтый фон)
+                    Color backgroundColor = Items[i].IsSelected ? Color.Yellow : Items[i].Color;
+                    
                     // Фон
-                    g.FillRectangle(new SolidBrush(Items[i].Color),
+                    g.FillRectangle(new SolidBrush(backgroundColor),
                         x + 2, y + 2, SlotSize - 4, SlotSize - 4);
 
                     // Спрайт предмета
@@ -87,29 +107,50 @@ namespace InfinitePenanceRL
         {
             using (var font = new Font("Arial", 10))
             {
-                // Измеряем размер текста
-                var textSize = g.MeasureString(item.Name, font);
+                // получаем описание предмета
+                string description = GetItemDescription(item);
                 
-                // Отступы для подсказки
+                // измеряем размеры текста
+                var nameSize = g.MeasureString(item.Name, font);
+                var descSize = g.MeasureString(description, font);
+                
+                // размеры подсказки
                 int padding = 5;
-                int tooltipWidth = (int)textSize.Width + padding * 2;
-                int tooltipHeight = (int)textSize.Height + padding * 2;
+                int tooltipWidth = (int)Math.Max(nameSize.Width, descSize.Width) + padding * 2;
+                int tooltipHeight = (int)(nameSize.Height + descSize.Height) + padding * 3; // +3 для отступа между строками
 
-                // Позиция подсказки (чуть выше курсора)
+                // позиция подсказки (чуть выше курсора)
                 int tooltipX = mousePos.X;
                 int tooltipY = mousePos.Y - tooltipHeight - 10;
 
-                // Фон подсказки
+                // фон подсказки
                 g.FillRectangle(new SolidBrush(Color.Black),
                     tooltipX, tooltipY, tooltipWidth, tooltipHeight);
 
-                // Граница подсказки
+                // граница подсказки
                 g.DrawRectangle(Pens.White,
                     tooltipX, tooltipY, tooltipWidth, tooltipHeight);
 
-                // Текст подсказки
+                // название предмета
                 g.DrawString(item.Name, font, Brushes.White,
                     tooltipX + padding, tooltipY + padding);
+                
+                // описание предмета
+                g.DrawString(description, font, Brushes.LightGray,
+                    tooltipX + padding, tooltipY + padding + (int)nameSize.Height + 3);
+            }
+        }
+        
+        private string GetItemDescription(InventoryItem item)
+        {
+            switch (item.Type)
+            {
+                case ItemType.Potion:
+                    return "Восстанавливает 50 здоровья";
+                case ItemType.Weapon:
+                    return "Увеличивает урон на 5";
+                default:
+                    return "Неизвестный предмет";
             }
         }
 
@@ -122,6 +163,58 @@ namespace InfinitePenanceRL
             }
             return false;
         }
+
+        public void HandleClick(Point clickPosition)
+        {
+            int clickedSlot = GetHoveredSlotIndex();
+            if (clickedSlot >= 0 && clickedSlot < Items.Count && Items[clickedSlot] != null)
+            {
+                var item = Items[clickedSlot];
+                
+                if (item.Selectable)
+                {
+                    // для выбираемых предметов - переключаем выбор
+                    item.IsSelected = !item.IsSelected;
+                    if (item.IsSelected)
+                    {
+                        item.Use(); // применяем эффект при выборе
+                    }
+                    else
+                    {
+                        // убираем эффект при отмене выбора
+                        RemoveItemEffect(item);
+                    }
+                }
+                else
+                {
+                    // для потребляемых предметов - используем
+                    if (item.Use())
+                    {
+                        // если предмет использован успешно
+                        if (item.Type == ItemType.Potion)
+                        {
+                            // зелье потребляется
+                            item.Count--;
+                            if (item.Count <= 0)
+                            {
+                                Items.RemoveAt(clickedSlot);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void RemoveItemEffect(InventoryItem item)
+        {
+            switch (item.Type)
+            {
+                case ItemType.Weapon:
+                    Player.WeaponDamageBonus = 0f; // убираем бонус урона
+                    LogThrottler.Log($"Меч снят! Урон: {Player.GetTotalDamage()}", "item_use");
+                    break;
+            }
+        }
     }
 
     public class InventoryItem
@@ -131,11 +224,50 @@ namespace InfinitePenanceRL
         public int Count { get; set; } = 1;
         public bool IsStackable { get; set; } = true;
         public string SpriteName { get; set; }
+        public ItemType Type { get; set; } = ItemType.Consumable;
+        public bool Selectable { get; set; } = false; // можно ли выбрать предмет
+        public bool IsSelected { get; set; } = false; // выбран ли предмет
 
         public InventoryItem(string name, Color color)
         {
             Name = name;
             Color = color;
         }
+
+        // метод для использования предмета
+        public bool Use()
+        {
+            switch (Type)
+            {
+                case ItemType.Potion:
+                    if (Player.Health < Player.MaxHealth)
+                    {
+                        Player.Health = Math.Min(Player.MaxHealth, Player.Health + 50);
+                        LogThrottler.Log($"Использовано зелье! Здоровье: {Player.Health}/{Player.MaxHealth}", "item_use");
+                        return true; // предмет использован
+                    }
+                    else
+                    {
+                        LogThrottler.Log("Здоровье уже максимальное!", "item_use");
+                        return false; // предмет не использован
+                    }
+                
+                case ItemType.Weapon:
+                    // меч дает +5 к урону
+                    Player.WeaponDamageBonus = 5f;
+                    LogThrottler.Log($"Экипирован меч! Урон: {Player.GetTotalDamage()} (базовый {Player.Damage} + меч {Player.WeaponDamageBonus})", "item_use");
+                    return true;
+                
+                default:
+                    return false;
+            }
+        }
+    }
+
+    public enum ItemType
+    {
+        Consumable,
+        Potion,
+        Weapon
     }
 } 

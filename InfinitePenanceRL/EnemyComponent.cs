@@ -23,6 +23,13 @@ namespace InfinitePenanceRL
         private float _projectileCooldown = 3.0f; // Кулдаун снарядов в секундах
         private float _projectileTimer = 0f;
         private float _projectileRange = 400f; // Дальность стрельбы снарядами
+        
+        // переменные для эффекта получения урона
+        private float _hitEffectTimer = 0f;
+        private float _hitEffectDuration = 0.3f; // длительность эффекта в секундах
+        private bool _isHit = false;
+        private Vector2 _originalPosition;
+        private float _shakeIntensity = 2f;
 
         public EnemyComponent()
         {
@@ -40,6 +47,11 @@ namespace InfinitePenanceRL
             // Уменьшаем здоровье
             Health -= damage;
             LogThrottler.Log($"Enemy took {damage} damage, health: {Health}/{MaxHealth}", "enemy_damage");
+            
+            // запускаем эффект получения урона
+            _isHit = true;
+            _hitEffectTimer = _hitEffectDuration;
+            _originalPosition = Owner.Position;
             
             // Если здоровье упало до 0 или ниже — враг умирает
             if (Health <= 0)
@@ -65,6 +77,26 @@ namespace InfinitePenanceRL
             
             if (IsDead) return;
 
+            // обрабатываем эффект получения урона
+            if (_isHit)
+            {
+                _hitEffectTimer -= 1.0f / 60.0f;
+                
+                if (_hitEffectTimer <= 0)
+                {
+                    // эффект закончился
+                    _isHit = false;
+                    Owner.Position = _originalPosition; // возвращаем на исходную позицию
+                }
+                else
+                {
+                    // применяем эффект - только тряска
+                    float shakeX = (float)(_random.NextDouble() - 0.5) * _shakeIntensity;
+                    float shakeY = (float)(_random.NextDouble() - 0.5) * _shakeIntensity;
+                    Owner.Position = _originalPosition + new Vector2(shakeX, shakeY);
+                }
+            }
+
             // Получаем компонент анимации
             var animation = Owner.GetComponent<AnimationComponent>();
             var render = Owner.GetComponent<RenderComponent>(); // Получаем компонент рендера для поворота
@@ -80,7 +112,7 @@ namespace InfinitePenanceRL
                 float dist = Vector2.Distance(player.Position, Owner.Position);
                 
                 // Иногда воспроизводим звук ворчания, если враг рядом
-                if (dist < 200 && _random.Next(1000) < 2) // 0.2% шанс каждый кадр
+                if (dist < 200 && _random.Next(1000) < 10) // увеличили с 2 до 10 (1% шанс каждый кадр)
                 {
                     Game.Sounds.PlayEnemyGrunt();
                 }

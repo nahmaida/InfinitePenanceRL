@@ -57,8 +57,8 @@ namespace InfinitePenanceRL
                 var enemyComponent = closestEnemy.GetComponent<EnemyComponent>();
                 if (enemyComponent != null)
                 {
-                    enemyComponent.TakeDamage(Player.Damage);
-                    LogThrottler.Log($"Player attacked enemy for {Player.Damage} damage", "player_attack");
+                    enemyComponent.TakeDamage(Player.GetTotalDamage());
+                    LogThrottler.Log($"Player attacked enemy for {Player.GetTotalDamage()} damage", "player_attack");
                 }
             }
             else
