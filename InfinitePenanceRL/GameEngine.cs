@@ -185,19 +185,49 @@ namespace InfinitePenanceRL
 
         public void LoadGameFromFile(string filename)
         {
-            string path = Path.Combine("saves", filename);
-            if (!File.Exists(path)) return;
-            string json = File.ReadAllText(path);
-            var saveData = JsonSerializer.Deserialize<FullSaveData>(json);
-            if (saveData != null)
+            // Добавляем расширение .json если его нет
+            if (!filename.EndsWith(".json"))
             {
-                Player.LoadFromSaveData(saveData.Player);
-                CurrentScene.LoadMazeSaveData(saveData.Maze);
-                var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
-                if (player != null)
+                filename += ".json";
+            }
+            
+            string path = Path.Combine("saves", filename);
+            LogThrottler.Log($"Пытаемся загрузить файл: {path}", "game_engine");
+            
+            if (!File.Exists(path))
+            {
+                LogThrottler.Log($"Файл не найден: {path}", "game_engine");
+                return;
+            }
+            
+            try
+            {
+                string json = File.ReadAllText(path);
+                var saveData = JsonSerializer.Deserialize<FullSaveData>(json);
+                if (saveData != null)
                 {
-                    player.Position = Player.Position;
+                    LogThrottler.Log("Данные сохранения загружены успешно", "game_engine");
+                    Player.LoadFromSaveData(saveData.Player);
+                    CurrentScene.LoadMazeSaveData(saveData.Maze);
+                    var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
+                    if (player != null)
+                    {
+                        player.Position = Player.Position;
+                        LogThrottler.Log($"Позиция игрока установлена: {Player.Position.X}, {Player.Position.Y}", "game_engine");
+                    }
+                    else
+                    {
+                        LogThrottler.Log("Игрок не найден на сцене", "game_engine");
+                    }
                 }
+                else
+                {
+                    LogThrottler.Log("Ошибка десериализации данных сохранения", "game_engine");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogThrottler.Log($"Ошибка загрузки сохранения: {ex.Message}", "game_engine");
             }
         }
 

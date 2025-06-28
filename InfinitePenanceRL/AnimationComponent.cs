@@ -14,13 +14,16 @@ namespace InfinitePenanceRL
         private int _currentFrame = 0;
         private float _frameTimer = 0;
         private const float FRAME_TIME = 0.1f; // Время между кадрами (чем больше, тем медленнее)
+        private const float ATTACK_FRAME_TIME = 0.05f; // Быстрые кадры для атаки
         private const int SPRITE_SIZE = 16;
         private bool _isFirstUpdate = true;
         private string _lastLoggedAnimation = "";
         private RenderComponent _render;
         private bool _isAttacking = false;
         private float _attackDuration = 0f;
-        private const float ATTACK_ANIMATION_DURATION = 0.4f; // 4 кадра * 0.1s на каждый кадр
+        private const float ATTACK_ANIMATION_DURATION = 0.2f; // 4 кадра * 0.05s = 0.2s (быстрее)
+        private float _attackCooldown = 0f;
+        private const float ATTACK_COOLDOWN_DURATION = 0.3f; // Кулдаун чуть больше анимации
 
         public AnimationComponent()
         {
@@ -98,6 +101,13 @@ namespace InfinitePenanceRL
                 return;
 
             float deltaTime = 1.0f / 60; // При 60 фпс
+            
+            // Обновляем кулдаун атаки
+            if (_attackCooldown > 0)
+            {
+                _attackCooldown -= deltaTime;
+            }
+
             _frameTimer += deltaTime;
 
             // Update attack duration
@@ -112,11 +122,30 @@ namespace InfinitePenanceRL
                 }
             }
 
-            if (_frameTimer >= FRAME_TIME)
+            // Выбираем время между кадрами в зависимости от анимации
+            float currentFrameTime = (_currentAnimation == "attacking") ? ATTACK_FRAME_TIME : FRAME_TIME;
+
+            if (_frameTimer >= currentFrameTime)
             {
                 _frameTimer = 0;
                 _currentFrame = (_currentFrame + 1) % _animations[_currentAnimation].Length;
                 UpdateSpriteRegion();
+            }
+        }
+
+        // Проверяем, можно ли атаковать (нет кулдауна)
+        public bool CanAttack()
+        {
+            return _attackCooldown <= 0;
+        }
+
+        // Запускаем атаку (если нет кулдауна)
+        public void StartAttack()
+        {
+            if (CanAttack())
+            {
+                PlayAnimation("attacking");
+                _attackCooldown = ATTACK_COOLDOWN_DURATION;
             }
         }
     }

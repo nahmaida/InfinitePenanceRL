@@ -37,7 +37,7 @@ namespace InfinitePenanceRL
 
         public override void Update()
         {
-            LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
+            // LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
             
             // Если враг только что умер — создаём кровь
             if (IsDead && !_hasCreatedDeathParticles)

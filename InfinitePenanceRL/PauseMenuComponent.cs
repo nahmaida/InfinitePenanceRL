@@ -80,11 +80,18 @@ namespace InfinitePenanceRL
                 using (var font = new Font("Arial", 14))
                 {
                     g.DrawString("Выберите сохранение:", font, Brushes.White, x + 30, y + 85);
-                    for (int i = 0; i < _saveFiles.Count; i++)
+                    if (_saveFiles.Count == 0)
                     {
-                        var brush = i == _selectedSaveIndex ? Brushes.Yellow : Brushes.White;
-                        string filename = Path.GetFileNameWithoutExtension(_saveFiles[i]);
-                        g.DrawString(filename, font, brush, x + 40, y + 110 + i * 30);
+                        g.DrawString("Нет сохранений", font, Brushes.Gray, x + 40, y + 130);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < _saveFiles.Count; i++)
+                        {
+                            var brush = i == _selectedSaveIndex ? Brushes.Yellow : Brushes.White;
+                            string filename = Path.GetFileNameWithoutExtension(_saveFiles[i]);
+                            g.DrawString(filename, font, brush, x + 40, y + 110 + i * 30);
+                        }
                     }
                 }
             }
@@ -92,27 +99,33 @@ namespace InfinitePenanceRL
 
         public void NextButton()
         {
-            if (!_showSaveInput && !_showLoadList && !_showMusicControls)
-            {
-                int maxIndex = _showMusicControls ? 3 : 4;
-                _selectedIndex = (_selectedIndex + 1) % (maxIndex + 1);
-            }
-            else if (_showLoadList && _saveFiles.Count > 0)
+            if (_showLoadList && _saveFiles.Count > 0)
             {
                 _selectedSaveIndex = (_selectedSaveIndex + 1) % _saveFiles.Count;
+            }
+            else if (_showMusicControls)
+            {
+                _selectedIndex = (_selectedIndex + 1) % 4; // 4 кнопки в музыке
+            }
+            else if (!_showSaveInput && !_showLoadList && !_showMusicControls)
+            {
+                _selectedIndex = (_selectedIndex + 1) % 5; // 5 кнопок в главном меню
             }
         }
 
         public void PrevButton()
         {
-            if (!_showSaveInput && !_showLoadList && !_showMusicControls)
-            {
-                int maxIndex = _showMusicControls ? 3 : 4;
-                _selectedIndex = (_selectedIndex - 1 + (maxIndex + 1)) % (maxIndex + 1);
-            }
-            else if (_showLoadList && _saveFiles.Count > 0)
+            if (_showLoadList && _saveFiles.Count > 0)
             {
                 _selectedSaveIndex = (_selectedSaveIndex - 1 + _saveFiles.Count) % _saveFiles.Count;
+            }
+            else if (_showMusicControls)
+            {
+                _selectedIndex = (_selectedIndex - 1 + 4) % 4; // 4 кнопки в музыке
+            }
+            else if (!_showSaveInput && !_showLoadList && !_showMusicControls)
+            {
+                _selectedIndex = (_selectedIndex - 1 + 5) % 5; // 5 кнопок в главном меню
             }
         }
 
@@ -135,8 +148,13 @@ namespace InfinitePenanceRL
                 if (_saveFiles.Count > 0 && _selectedSaveIndex < _saveFiles.Count)
                 {
                     string filename = Path.GetFileNameWithoutExtension(_saveFiles[_selectedSaveIndex]);
+                    LogThrottler.Log($"Загружаем сохранение: {filename}", "pause_menu");
                     LoadRequested?.Invoke(filename);
                     _showLoadList = false;
+                }
+                else
+                {
+                    LogThrottler.Log($"Нет файлов для загрузки. Count: {_saveFiles.Count}, Selected: {_selectedSaveIndex}", "pause_menu");
                 }
             }
             else if (_showMusicControls)
@@ -174,6 +192,7 @@ namespace InfinitePenanceRL
                         LoadSaveFiles();
                         _showLoadList = true;
                         _selectedSaveIndex = 0;
+                        LogThrottler.Log("Открыт список сохранений", "pause_menu");
                         break;
                     case 3:
                         _showMusicControls = true;
@@ -193,6 +212,15 @@ namespace InfinitePenanceRL
             {
                 var files = Directory.GetFiles("saves", "*.json");
                 _saveFiles.AddRange(files);
+                LogThrottler.Log($"Загружено {_saveFiles.Count} файлов сохранений", "pause_menu");
+                foreach (var file in _saveFiles)
+                {
+                    LogThrottler.Log($"Файл сохранения: {Path.GetFileName(file)}", "pause_menu");
+                }
+            }
+            else
+            {
+                LogThrottler.Log("Папка saves не найдена", "pause_menu");
             }
         }
 
