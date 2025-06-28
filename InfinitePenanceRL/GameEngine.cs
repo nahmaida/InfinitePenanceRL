@@ -161,7 +161,7 @@ namespace InfinitePenanceRL
 
         public void ExitGame()
         {
-            State = GameState.Exiting;
+            State = GameState.GameOver;
             Music.StopMusic(); // Останавливаем музыку при выходе
             mainForm.Close();
         }

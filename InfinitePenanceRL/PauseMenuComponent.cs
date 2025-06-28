@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace InfinitePenanceRL
 {
@@ -22,10 +23,12 @@ namespace InfinitePenanceRL
         public event Action<string> LoadRequested;
 
         private bool _showSaveInput = false;
-        private string _saveInput = "";
         private bool _showLoadList = false;
-        private string[] _saveFiles = Array.Empty<string>();
-        private int _loadSelected = 0;
+        private List<string> _saveFiles = new List<string>();
+        private int _selectedSaveIndex = 0;
+        private string _saveInput = "";
+        private bool _isTyping = false;
+        private bool _showMusicControls = false;
 
         public override void Draw(Graphics g)
         {
@@ -41,11 +44,22 @@ namespace InfinitePenanceRL
             }
             using (var font = new Font("Arial", 16))
             {
-                for (int i = 0; i < _buttons.Length; i++)
+                // Основные кнопки меню
+                if (!_showSaveInput && !_showLoadList && !_showMusicControls)
                 {
-                    var btnY = y + 80 + i * 50;
-                    var brush = i == _selectedIndex ? Brushes.Yellow : Brushes.White;
-                    g.DrawString(_buttons[i].Label, font, brush, x + 100, btnY);
+                    g.DrawString("Продолжить", font, _selectedIndex == 0 ? Brushes.Yellow : Brushes.White, x + 20, y + 80);
+                    g.DrawString("Сохранить", font, _selectedIndex == 1 ? Brushes.Yellow : Brushes.White, x + 20, y + 120);
+                    g.DrawString("Загрузить", font, _selectedIndex == 2 ? Brushes.Yellow : Brushes.White, x + 20, y + 160);
+                    g.DrawString("Музыка", font, _selectedIndex == 3 ? Brushes.Yellow : Brushes.White, x + 20, y + 200);
+                    g.DrawString("Выход", font, _selectedIndex == 4 ? Brushes.Yellow : Brushes.White, x + 20, y + 240);
+                }
+                // Управление музыкой
+                else if (_showMusicControls)
+                {
+                    g.DrawString("Пауза/Играть", font, _selectedIndex == 0 ? Brushes.Yellow : Brushes.White, x + 20, y + 80);
+                    g.DrawString("Следующий трек", font, _selectedIndex == 1 ? Brushes.Yellow : Brushes.White, x + 20, y + 120);
+                    g.DrawString("Предыдущий трек", font, _selectedIndex == 2 ? Brushes.Yellow : Brushes.White, x + 20, y + 160);
+                    g.DrawString("Назад", font, _selectedIndex == 3 ? Brushes.Yellow : Brushes.White, x + 20, y + 200);
                 }
             }
             if (_showSaveInput)
@@ -66,73 +80,158 @@ namespace InfinitePenanceRL
                 using (var font = new Font("Arial", 14))
                 {
                     g.DrawString("Выберите сохранение:", font, Brushes.White, x + 30, y + 85);
-                    for (int i = 0; i < _saveFiles.Length; i++)
+                    for (int i = 0; i < _saveFiles.Count; i++)
                     {
-                        var brush = i == _loadSelected ? Brushes.Yellow : Brushes.White;
-                        g.DrawString(_saveFiles[i], font, brush, x + 40, y + 110 + i * 30);
+                        var brush = i == _selectedSaveIndex ? Brushes.Yellow : Brushes.White;
+                        string filename = Path.GetFileNameWithoutExtension(_saveFiles[i]);
+                        g.DrawString(filename, font, brush, x + 40, y + 110 + i * 30);
                     }
                 }
             }
         }
 
-        public void NextButton() { if (!_showSaveInput && !_showLoadList) _selectedIndex = (_selectedIndex + 1) % _buttons.Length; else if (_showLoadList && _saveFiles.Length > 0) _loadSelected = (_loadSelected + 1) % _saveFiles.Length; }
-        public void PrevButton() { if (!_showSaveInput && !_showLoadList) _selectedIndex = (_selectedIndex - 1 + _buttons.Length) % _buttons.Length; else if (_showLoadList && _saveFiles.Length > 0) _loadSelected = (_loadSelected - 1 + _saveFiles.Length) % _saveFiles.Length; }
+        public void NextButton()
+        {
+            if (!_showSaveInput && !_showLoadList && !_showMusicControls)
+            {
+                int maxIndex = _showMusicControls ? 3 : 4;
+                _selectedIndex = (_selectedIndex + 1) % (maxIndex + 1);
+            }
+            else if (_showLoadList && _saveFiles.Count > 0)
+            {
+                _selectedSaveIndex = (_selectedSaveIndex + 1) % _saveFiles.Count;
+            }
+        }
+
+        public void PrevButton()
+        {
+            if (!_showSaveInput && !_showLoadList && !_showMusicControls)
+            {
+                int maxIndex = _showMusicControls ? 3 : 4;
+                _selectedIndex = (_selectedIndex - 1 + (maxIndex + 1)) % (maxIndex + 1);
+            }
+            else if (_showLoadList && _saveFiles.Count > 0)
+            {
+                _selectedSaveIndex = (_selectedSaveIndex - 1 + _saveFiles.Count) % _saveFiles.Count;
+            }
+        }
+
         public void PressButton()
         {
+            if (!IsActive) return;
+
             if (_showSaveInput)
             {
-                if (!string.IsNullOrWhiteSpace(_saveInput))
+                if (!string.IsNullOrEmpty(_saveInput))
                 {
-                    SaveRequested?.Invoke(_saveInput.EndsWith(".json") ? _saveInput : _saveInput + ".json");
+                    SaveRequested?.Invoke(_saveInput);
                     _showSaveInput = false;
                     _saveInput = "";
+                    _isTyping = false;
                 }
-                return;
             }
-            if (_showLoadList)
+            else if (_showLoadList)
             {
-                if (_saveFiles.Length > 0)
+                if (_saveFiles.Count > 0 && _selectedSaveIndex < _saveFiles.Count)
                 {
-                    LoadRequested?.Invoke(_saveFiles[_loadSelected]);
+                    string filename = Path.GetFileNameWithoutExtension(_saveFiles[_selectedSaveIndex]);
+                    LoadRequested?.Invoke(filename);
                     _showLoadList = false;
                 }
-                return;
             }
-            var action = _buttons[_selectedIndex].Action;
-            if (action == PauseMenuAction.Save)
+            else if (_showMusicControls)
             {
-                _showSaveInput = true;
-                _saveInput = "";
-            }
-            else if (action == PauseMenuAction.Load)
-            {
-                _showLoadList = true;
-                _saveFiles = Directory.Exists("saves") ? Directory.GetFiles("saves", "*.json").Select(Path.GetFileName).ToArray() : Array.Empty<string>();
-                _loadSelected = 0;
+                switch (_selectedIndex)
+                {
+                    case 0:
+                        Owner.Game.Music.TogglePause();
+                        break;
+                    case 1:
+                        Owner.Game.Music.PlayNextTrack();
+                        break;
+                    case 2:
+                        Owner.Game.Music.PlayPreviousTrack();
+                        break;
+                    case 3:
+                        _showMusicControls = false;
+                        _selectedIndex = 0;
+                        break;
+                }
             }
             else
             {
-                OnButtonPressed?.Invoke(action);
+                switch (_selectedIndex)
+                {
+                    case 0:
+                        OnButtonPressed?.Invoke(PauseMenuAction.Resume);
+                        break;
+                    case 1:
+                        _showSaveInput = true;
+                        _isTyping = true;
+                        _saveInput = "";
+                        break;
+                    case 2:
+                        LoadSaveFiles();
+                        _showLoadList = true;
+                        _selectedSaveIndex = 0;
+                        break;
+                    case 3:
+                        _showMusicControls = true;
+                        _selectedIndex = 0;
+                        break;
+                    case 4:
+                        OnButtonPressed?.Invoke(PauseMenuAction.Exit);
+                        break;
+                }
             }
         }
-        public void InputChar(char c) { if (_showSaveInput && _saveInput.Length < 32 && !char.IsControl(c)) _saveInput += c; }
-        public void Backspace() { if (_showSaveInput && _saveInput.Length > 0) _saveInput = _saveInput.Substring(0, _saveInput.Length - 1); }
+
+        private void LoadSaveFiles()
+        {
+            _saveFiles.Clear();
+            if (Directory.Exists("saves"))
+            {
+                var files = Directory.GetFiles("saves", "*.json");
+                _saveFiles.AddRange(files);
+            }
+        }
+
+        public void InputChar(char c)
+        {
+            if (_showSaveInput && _saveInput.Length < 32 && !char.IsControl(c))
+                _saveInput += c;
+        }
+
+        public void Backspace()
+        {
+            if (_showSaveInput && _saveInput.Length > 0)
+                _saveInput = _saveInput.Substring(0, _saveInput.Length - 1);
+        }
+
         public bool IsAwaitingInput() => _showSaveInput || _showLoadList;
-        public void CancelInput() { _showSaveInput = false; _showLoadList = false; _saveInput = ""; }
+
+        public void CancelInput()
+        {
+            _showSaveInput = false;
+            _showLoadList = false;
+            _showMusicControls = false;
+            _saveInput = "";
+        }
 
         public void HandleMouseClick(int mouseX, int mouseY, int menuX, int menuY)
         {
-            if (_showLoadList && _saveFiles.Length > 0)
+            if (_showLoadList && _saveFiles.Count > 0)
             {
-                for (int i = 0; i < _saveFiles.Length; i++)
+                for (int i = 0; i < _saveFiles.Count; i++)
                 {
                     int itemX = menuX + 40;
                     int itemY = menuY + 110 + i * 30;
                     var rect = new System.Drawing.Rectangle(itemX, itemY, 200, 24);
                     if (rect.Contains(mouseX, mouseY))
                     {
-                        _loadSelected = i;
-                        LoadRequested?.Invoke(_saveFiles[_loadSelected]);
+                        _selectedSaveIndex = i;
+                        string filename = Path.GetFileNameWithoutExtension(_saveFiles[_selectedSaveIndex]);
+                        LoadRequested?.Invoke(filename);
                         _showLoadList = false;
                         return;
                     }

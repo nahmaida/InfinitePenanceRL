@@ -65,6 +65,7 @@ namespace InfinitePenanceRL
                 int width = 300, height = 300;
                 int x = (this.ClientSize.Width - width) / 2;
                 int y = (this.ClientSize.Height - height) / 2;
+                
                 // Если сейчас открыт список сохранений — кликаем по файлам
                 if (typeof(PauseMenuComponent).GetField("_showLoadList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(pauseMenu) is bool showLoadList && showLoadList)
                 {
@@ -72,20 +73,53 @@ namespace InfinitePenanceRL
                     Invalidate();
                     return;
                 }
-                // Кнопки идут вертикально, высота кнопки 50, первая кнопка сдвинута на 80 пикселей вниз
-                for (int i = 0; i < 4; i++)
+                
+                // Проверяем, в каком состоянии меню
+                bool showSaveInput = (bool)typeof(PauseMenuComponent).GetField("_showSaveInput", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(pauseMenu);
+                bool showMusicControls = (bool)typeof(PauseMenuComponent).GetField("_showMusicControls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(pauseMenu);
+                
+                if (showSaveInput || showMusicControls)
                 {
-                    int btnY = y + 80 + i * 50;
-                    Rectangle btnRect = new Rectangle(x + 100, btnY, 120, 40); // ширина 120, высота 40
-                    if (btnRect.Contains(e.Location))
+                    // Для подменю используем точные позиции
+                    if (showMusicControls)
                     {
-                        // Выделяем нужную кнопку и жмём её
-                        typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
-                        pauseMenu.PressButton();
-                        Invalidate();
-                        return;
+                        // Музыка: 4 кнопки с точными позициями
+                        int[] musicButtonYPositions = { 80, 120, 160, 200 }; // Точные Y позиции из PauseMenuComponent
+                        
+                        for (int i = 0; i < 4; i++)
+                        {
+                            int btnY = y + musicButtonYPositions[i];
+                            Rectangle btnRect = new Rectangle(x + 20, btnY, 260, 30); // Высота 30 для точности
+                            if (btnRect.Contains(e.Location))
+                            {
+                                typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
+                                pauseMenu.PressButton();
+                                Invalidate();
+                                return;
+                            }
+                        }
+                    }
+                    // Для сохранения нет кликабельных кнопок, только ввод текста
+                }
+                else
+                {
+                    // Основное меню: 5 кнопок с точными позициями
+                    int[] buttonYPositions = { 80, 120, 160, 200, 240 }; // Точные Y позиции из PauseMenuComponent
+                    
+                    for (int i = 0; i < 5; i++)
+                    {
+                        int btnY = y + buttonYPositions[i];
+                        Rectangle btnRect = new Rectangle(x + 20, btnY, 260, 30); // Высота 30 для точности
+                        if (btnRect.Contains(e.Location))
+                        {
+                            typeof(PauseMenuComponent).GetField("_selectedIndex", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(pauseMenu, i);
+                            pauseMenu.PressButton();
+                            Invalidate();
+                            return;
+                        }
                     }
                 }
+                
                 // Если клик вне кнопок — ничего не делаем
                 return;
             }
