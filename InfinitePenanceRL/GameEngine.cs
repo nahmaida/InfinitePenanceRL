@@ -103,6 +103,9 @@ namespace InfinitePenanceRL
 
             Physics.Update(CurrentScene);
 
+            // обновляем игрока для регенерации здоровья
+            Player.Update(1.0f / TARGET_FPS);
+
             // Логируем количество врагов и EnemyComponent
             int enemyCount = CurrentScene.Entities.Count(e => e.GetComponent<EnemyComponent>() != null);
             int enemyCompCount = CurrentScene.Entities.SelectMany(e => e.Components).OfType<EnemyComponent>().Count();

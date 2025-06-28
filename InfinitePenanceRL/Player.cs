@@ -13,6 +13,28 @@ namespace InfinitePenanceRL
         public static float Speed { get; set; } = 5f;
         public static List<InventoryItem> Inventory { get; set; } = new List<InventoryItem>();
         public static Vector2 Position { get; set; } = new Vector2(100, 100);
+        
+        // таймер для регенерации здоровья
+        private static float regenerationTimer = 0f;
+        private static float regenerationInterval = 1f; // 1 секунда
+
+        public static void Update(float deltaTime)
+        {
+            // регенерация здоровья
+            if (Health < 100f)
+            {
+                regenerationTimer += deltaTime;
+                if (regenerationTimer >= regenerationInterval)
+                {
+                    Health = Math.Min(100f, Health + 1f);
+                    regenerationTimer = 0f;
+                }
+            }
+            else
+            {
+                regenerationTimer = 0f;
+            }
+        }
 
         public static PlayerData GetSaveData()
         {
