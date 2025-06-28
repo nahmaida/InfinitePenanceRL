@@ -22,6 +22,16 @@ namespace InfinitePenanceRL
         public Size WorldSize { get; set; }  // Размеры игрового мира
         public ParticleSystem Particles { get; } = new ParticleSystem();  // Система частиц
         public MusicManager Music { get; } = new MusicManager();  // Менеджер музыки
+        private SoundManager _sounds;  // Менеджер звуковых эффектов (ленивая инициализация)
+        public SoundManager Sounds 
+        { 
+            get 
+            { 
+                if (_sounds == null)
+                    _sounds = new SoundManager();
+                return _sounds; 
+            } 
+        }
 
         private System.Windows.Forms.Timer gameTimer;  // Таймер для обновления игры
         private MainForm mainForm;  // Главное окно игры

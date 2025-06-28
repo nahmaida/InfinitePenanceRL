@@ -22,27 +22,34 @@ namespace InfinitePenanceRL
             LogThrottler.Log("Создан EnemyComponent", "enemy_debug");
         }
 
+        // Метод для получения урона
         public void TakeDamage(float damage)
         {
+            if (IsDead) return;
+            
+            // Воспроизводим звук боли
+            Game.Sounds.PlayEnemyPain();
+            
+            // Уменьшаем здоровье
             Health -= damage;
             LogThrottler.Log($"Enemy took {damage} damage, health: {Health}/{MaxHealth}", "enemy_damage");
             
-            if (IsDead)
+            // Если здоровье упало до 0 или ниже — враг умирает
+            if (Health <= 0)
             {
-                LogThrottler.Log("Enemy defeated!", "enemy_defeat");
-                // Удаляем врага
                 Owner.MarkForDeletion();
             }
         }
 
         public override void Update()
         {
-            // LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
+            LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
             
             // Если враг только что умер — создаём кровь
             if (IsDead && !_hasCreatedDeathParticles)
             {
                 Game.Particles.CreateBloodSplatter(Owner.Position, 12);
+                Game.Sounds.PlayEnemyDeath(); // Звук смерти врага
                 _hasCreatedDeathParticles = true;
                 return;
             }
@@ -54,30 +61,39 @@ namespace InfinitePenanceRL
             if (player != null)
             {
                 var toPlayer = player.Position - Owner.Position;
-                // LogThrottler.Log($"Позиция врага: {Owner.Position.X},{Owner.Position.Y} | Позиция игрока: {player.Position.X},{player.Position.Y}", "enemy_attack");
+                LogThrottler.Log($"Позиция врага: {Owner.Position.X},{Owner.Position.Y} | Позиция игрока: {player.Position.X},{player.Position.Y}", "enemy_attack");
                 float dist = Vector2.Distance(player.Position, Owner.Position);
+                
+                // Иногда воспроизводим звук ворчания, если враг рядом
+                if (dist < 200 && _random.Next(1000) < 2) // 0.2% шанс каждый кадр
+                {
+                    Game.Sounds.PlayEnemyGrunt();
+                }
+                
                 // Проверяем прямую видимость (по горизонтали или вертикали, без стен)
                 bool straightLine = false;
-                int x0 = (int)((Owner.Position.X + 16) / Scene.CellSize);
-                int y0 = (int)((Owner.Position.Y + 16) / Scene.CellSize);
-                int x1 = (int)((player.Position.X + 16) / Scene.CellSize);
-                int y1 = (int)((player.Position.Y + 16) / Scene.CellSize);
-                if (x0 == x1)
+                if (Math.Abs(toPlayer.X) < 10 || Math.Abs(toPlayer.Y) < 10)
                 {
                     straightLine = true;
-                    int minY = Math.Min(y0, y1), maxY = Math.Max(y0, y1);
-                    for (int y = minY + 1; y < maxY; y++)
-                        if (!Game.CurrentScene.IsWalkable(x0, y)) straightLine = false;
                 }
-                else if (y0 == y1)
+
+                LogThrottler.Log($"Враг проверяет атаку: расстояние до игрока = {dist}, радиус атаки = {_attackRange}", "enemy_attack");
+                if (dist <= _attackRange)
                 {
-                    straightLine = true;
-                    int minX = Math.Min(x0, x1), maxX = Math.Max(x0, x1);
-                    for (int x = minX + 1; x < maxX; x++)
-                        if (!Game.CurrentScene.IsWalkable(x, y0)) straightLine = false;
+                    // Если рядом с игроком — атакуем
+                    _attackTimer -= 1.0f / 60; // Уменьшаем таймер
+                    if (_attackTimer <= 0)
+                    {
+                        _attackTimer = _attackCooldown;
+                        Player.Health -= Attack;
+                        LogThrottler.Log($"Враг атакует игрока на {Attack} урона!", "enemy_attack");
+                        LogThrottler.Log($"Текущее здоровье игрока: {Player.Health}", "enemy_attack");
+                        
+                        // Запускаем тряску экрана при получении урона
+                        Game.TriggerScreenShake();
+                    }
                 }
-                // Если есть прямая видимость — идём к игроку
-                if (straightLine && dist > _attackRange)
+                else if (straightLine && dist > _attackRange)
                 {
                     var dir = (player.Position - Owner.Position).Normalize();
                     var newPos = Owner.Position + dir * Speed;
@@ -87,26 +103,6 @@ namespace InfinitePenanceRL
                     {
                         Owner.Position = newPos;
                     }
-                }
-                // Если рядом с игроком — атакуем
-                // LogThrottler.Log($"Враг проверяет атаку: расстояние до игрока = {dist}, радиус атаки = {_attackRange}", "enemy_attack");
-                if (dist <= _attackRange)
-                {
-                    _attackTimer += 1.0f / 60.0f;
-                    if (_attackTimer >= _attackCooldown)
-                    {
-                        _attackTimer = 0f;
-                        Player.Health -= Attack;
-                        LogThrottler.Log($"Враг атакует игрока на {Attack} урона!", "enemy_attack");
-                        LogThrottler.Log($"Текущее здоровье игрока: {Player.Health}", "enemy_attack");
-                        
-                        // Запускаем тряску экрана при получении урона
-                        Game.TriggerScreenShake();
-                    }
-                }
-                else
-                {
-                    _attackTimer = 0f;
                 }
             }
             else

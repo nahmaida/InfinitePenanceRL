@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Media;
 using System.Windows.Forms;
+using NAudio.Wave;
 
 namespace InfinitePenanceRL
 {
@@ -14,9 +14,10 @@ namespace InfinitePenanceRL
         private int _currentTrackIndex = 0;
         private bool _isPlaying = false;
         private bool _isEnabled = true;
-        private SoundPlayer _currentPlayer = null;
         private System.Windows.Forms.Timer _fadeTimer = new System.Windows.Forms.Timer();
         private float _volume = 1.0f;
+        private WaveOutEvent _waveOut;
+        private WaveFileReader _currentWaveStream;
 
         public bool IsEnabled 
         { 
@@ -36,6 +37,7 @@ namespace InfinitePenanceRL
 
         public MusicManager()
         {
+            _waveOut = new WaveOutEvent();
             LoadMusicFiles();
             SetupFadeTimer();
         }
@@ -78,14 +80,13 @@ namespace InfinitePenanceRL
         // Настраиваем таймер для плавного перехода между треками
         private void SetupFadeTimer()
         {
-            _fadeTimer.Interval = 100; // Проверяем каждые 100мс
+            _fadeTimer.Interval = 1000; // Проверяем каждую секунду
             _fadeTimer.Tick += (sender, e) =>
             {
-                if (_currentPlayer != null && _isPlaying)
+                // Проверяем, закончился ли текущий трек
+                if (_isPlaying && _waveOut.PlaybackState == PlaybackState.Stopped)
                 {
-                    // Если текущий трек закончился, переходим к следующему
-                    // SoundPlayer не имеет события окончания, поэтому используем таймер
-                    // В реальности лучше использовать NAudio или другую библиотеку
+                    PlayNextTrack();
                 }
             };
         }
@@ -93,7 +94,10 @@ namespace InfinitePenanceRL
         // Начинаем воспроизведение музыки
         public void StartMusic()
         {
-            if (!_isEnabled || _musicFiles.Count == 0) return;
+            if (!_isEnabled || _musicFiles.Count == 0) 
+            {
+                return;
+            }
 
             try
             {
@@ -103,12 +107,13 @@ namespace InfinitePenanceRL
                     _currentTrackIndex = 0;
 
                 string currentFile = _musicFiles[_currentTrackIndex];
-                _currentPlayer = new SoundPlayer(currentFile);
-                _currentPlayer.Play();
+                
+                // Используем NAudio для воспроизведения музыки
+                _currentWaveStream = new WaveFileReader(currentFile);
+                _waveOut.Init(_currentWaveStream);
+                _waveOut.Play();
                 _isPlaying = true;
                 _fadeTimer.Start();
-
-                LogThrottler.Log($"Воспроизводится: {Path.GetFileName(currentFile)}", "music");
             }
             catch (Exception ex)
             {
@@ -120,14 +125,12 @@ namespace InfinitePenanceRL
         // Останавливаем музыку
         public void StopMusic()
         {
-            if (_currentPlayer != null)
-            {
-                _currentPlayer.Stop();
-                _currentPlayer.Dispose();
-                _currentPlayer = null;
-            }
+            _waveOut.Stop();
             _isPlaying = false;
             _fadeTimer.Stop();
+            
+            _currentWaveStream?.Dispose();
+            _currentWaveStream = null;
         }
 
         // Переходим к следующему треку
@@ -153,18 +156,20 @@ namespace InfinitePenanceRL
         // Пауза/возобновление
         public void TogglePause()
         {
-            if (_currentPlayer != null)
+            if (_isPlaying)
             {
-                if (_isPlaying)
+                if (_waveOut.PlaybackState == PlaybackState.Playing)
                 {
-                    _currentPlayer.Stop();
-                    _isPlaying = false;
+                    _waveOut.Pause();
                 }
                 else
                 {
-                    _currentPlayer.Play();
-                    _isPlaying = true;
+                    _waveOut.Play();
                 }
+            }
+            else
+            {
+                StartMusic();
             }
         }
 
@@ -172,6 +177,7 @@ namespace InfinitePenanceRL
         public void Dispose()
         {
             StopMusic();
+            _waveOut?.Dispose();
             _fadeTimer?.Dispose();
         }
     }

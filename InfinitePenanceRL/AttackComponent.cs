@@ -29,6 +29,9 @@ namespace InfinitePenanceRL
             // Запускаем анимацию атаки (с кулдауном)
             _animation.StartAttack();
             
+            // Воспроизводим звук атаки
+            Game.Sounds.PlayAttackSound();
+            
             // Находим всех врагов в радиусе атаки
             var enemies = Owner.Game.CurrentScene.Entities
                 .Where(e => e.GetComponent<EnemyTag>() != null)

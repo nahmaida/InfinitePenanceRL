@@ -133,6 +133,9 @@ namespace InfinitePenanceRL
         {
             if (!IsActive) return;
 
+            // Воспроизводим звук клика кнопки
+            Owner.Game.Sounds.PlayButtonClick();
+
             if (_showSaveInput)
             {
                 if (!string.IsNullOrEmpty(_saveInput))
