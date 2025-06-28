@@ -233,9 +233,9 @@ namespace InfinitePenanceRL
                 }
             }
 
-            // Спавним врагов (примерно 1 враг на 20 проходимых клеток)
-            int enemyCount = walkableCells.Count / 20;
-            enemyCount = Math.Max(1, Math.Min(enemyCount, 10)); // Минимум 1, максимум 10 врагов
+            // Спавним врагов (примерно 1 враг на 10 проходимых клеток - увеличили частоту)
+            int enemyCount = walkableCells.Count / 10;
+            enemyCount = Math.Max(1, Math.Min(enemyCount, 15)); // Минимум 1, максимум 15 врагов
 
             for (int i = 0; i < enemyCount; i++)
             {

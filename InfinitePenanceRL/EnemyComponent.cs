@@ -50,7 +50,7 @@ namespace InfinitePenanceRL
 
         public override void Update()
         {
-            LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
+            // LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
             
             // Если враг только что умер — создаём кровь
             if (IsDead && !_hasCreatedDeathParticles)
@@ -63,12 +63,18 @@ namespace InfinitePenanceRL
             
             if (IsDead) return;
 
+            // Получаем компонент анимации
+            var animation = Owner.GetComponent<AnimationComponent>();
+            var render = Owner.GetComponent<RenderComponent>(); // Получаем компонент рендера для поворота
+            bool isMoving = false;
+            Vector2 moveDirection = Vector2.Zero; // Направление движения для поворота
+
             // Находим игрока
             var player = Game.CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
             if (player != null)
             {
                 var toPlayer = player.Position - Owner.Position;
-                LogThrottler.Log($"Позиция врага: {Owner.Position.X},{Owner.Position.Y} | Позиция игрока: {player.Position.X},{player.Position.Y}", "enemy_attack");
+                // LogThrottler.Log($"Позиция врага: {Owner.Position.X},{Owner.Position.Y} | Позиция игрока: {player.Position.X},{player.Position.Y}", "enemy_attack");
                 float dist = Vector2.Distance(player.Position, Owner.Position);
                 
                 // Иногда воспроизводим звук ворчания, если враг рядом
@@ -84,12 +90,12 @@ namespace InfinitePenanceRL
                 _projectileTimer -= 1.0f / 60.0f;
                 if (straightLine && dist <= _projectileRange && dist > _attackRange && _projectileTimer <= 0)
                 {
-                    LogThrottler.Log($"Условия для запуска снаряда выполнены: straightLine={straightLine}, dist={dist}, range={_projectileRange}", "projectile");
+                    // LogThrottler.Log($"Условия для запуска снаряда выполнены: straightLine={straightLine}, dist={dist}, range={_projectileRange}", "projectile");
                     _projectileTimer = _projectileCooldown;
                     LaunchProjectile(player.Position);
                 }
 
-                LogThrottler.Log($"Враг проверяет атаку: расстояние до игрока = {dist}, радиус атаки = {_attackRange}", "enemy_attack");
+                // LogThrottler.Log($"Враг проверяет атаку: расстояние до игрока = {dist}, радиус атаки = {_attackRange}", "enemy_attack");
                 if (dist <= _attackRange)
                 {
                     // Если рядом с игроком — атакуем
@@ -114,6 +120,8 @@ namespace InfinitePenanceRL
                     if (Game.CurrentScene.IsWalkable(cellX, cellY) && Game.Physics.CanMoveTo(Owner, newPos))
                     {
                         Owner.Position = newPos;
+                        isMoving = true;
+                        moveDirection = dir;
                     }
                 }
             }
@@ -142,7 +150,23 @@ namespace InfinitePenanceRL
                     if (Owner.Game.CurrentScene.IsWalkable(cellX, cellY) && Owner.Game.Physics.CanMoveTo(Owner, newPos))
                     {
                         Owner.Position = newPos;
+                        isMoving = true;
+                        moveDirection = _moveDirection;
                     }
+                }
+            }
+
+            // Управляем анимацией
+            if (animation != null)
+            {
+                if (isMoving)
+                {
+                    animation.PlayAnimation("running");
+                    render.FlipHorizontal = moveDirection.X < 0;
+                }
+                else
+                {
+                    animation.PlayAnimation("idle");
                 }
             }
         }

@@ -130,18 +130,20 @@ namespace InfinitePenanceRL
             var render = new RenderComponent
             {
                 Color = Color.White,
-                Size = new Size(24, 24),
-                SpriteName = "", // Пустое имя спрайта = белый квадрат
-                Scale = 1.0f
+                Size = new Size(16, 16),
+                SpriteName = "enemy", // Используем спрайт
+                Scale = 2.0f
             };
 
             var collider = new ColliderComponent();
             var enemyTag = new EnemyTag();
+            var animation = new AnimationComponent(); // Добавляем анимацию
 
             enemy.AddComponent(enemyComponent);
             enemy.AddComponent(render);
             enemy.AddComponent(collider);
             enemy.AddComponent(enemyTag);
+            enemy.AddComponent(animation); // Добавляем компонент анимации
 
             LogThrottler.Log("Враг создан со всеми компонентами", "enemy_creation");
             return enemy;
