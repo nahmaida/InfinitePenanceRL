@@ -33,11 +33,16 @@ namespace InfinitePenanceRL
             } 
         }
 
+        public List<Entity> Projectiles => _projectiles; // Публичный доступ к снарядам
+
         private System.Windows.Forms.Timer gameTimer;  // Таймер для обновления игры
         private MainForm mainForm;  // Главное окно игры
         private const int TARGET_FPS = 60;  // Целевой FPS
         private const int MAZE_WIDTH = 41;  // Ширина лабиринта (4000/96 округлено вниз)
         private const int MAZE_HEIGHT = 41;  // Высота лабиринта (4000/96 округлено вниз)
+        private List<Entity> _entitiesToDelete = new List<Entity>(); // Список сущностей для удаления
+        private bool _shouldProcessDeletions = false; // Флаг для обработки удалений в следующем кадре
+        private List<Entity> _projectiles = new List<Entity>(); // Отдельный список для снарядов
 
         // Создаём новый движок и привязываем его к окну
         public GameEngine(MainForm form)
@@ -112,6 +117,24 @@ namespace InfinitePenanceRL
                 }
             }
 
+            // Обновляем снаряды отдельно
+            for (int i = _projectiles.Count - 1; i >= 0; i--)
+            {
+                var projectile = _projectiles[i];
+                var projectileComponent = projectile.GetComponent<ProjectileComponent>();
+                
+                if (projectileComponent != null)
+                {
+                    projectileComponent.Update();
+                    
+                    // Если снаряд нужно удалить
+                    if (projectileComponent.ShouldDelete())
+                    {
+                        _projectiles.RemoveAt(i);
+                    }
+                }
+            }
+
             // Камера следует за игроком
             var player = CurrentScene.Entities.FirstOrDefault(e => e.GetComponent<PlayerTag>() != null);
             if (player != null)
@@ -139,6 +162,17 @@ namespace InfinitePenanceRL
             if (CurrentScene != null)
             {
                 RenderSystem.Render(graphics, this, CurrentScene.Entities);  // Рисуем игровые объекты
+                
+                // Рисуем снаряды отдельно
+                foreach (var projectile in _projectiles)
+                {
+                    var render = projectile.GetComponent<RenderComponent>();
+                    if (render != null)
+                    {
+                        render.Draw(graphics);
+                    }
+                }
+                
                 Particles.Draw(graphics, Camera);  // Рисуем частицы
                 UI.Draw(graphics);  // Рисуем интерфейс поверх всего
             }

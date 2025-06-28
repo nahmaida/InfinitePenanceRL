@@ -34,6 +34,12 @@ namespace InfinitePenanceRL
             _animations["running"] = new[] { (1, 8), (4, 8), (7, 8), (10, 8) };   // Бежим
         }
 
+        // Метод для добавления пользовательских анимаций
+        public void AddCustomAnimation(string name, (int X, int Y)[] frames)
+        {
+            _animations[name] = frames;
+        }
+
         public void PlayAnimation(string animationName)
         {
             // Не прерываем анимацию до конца

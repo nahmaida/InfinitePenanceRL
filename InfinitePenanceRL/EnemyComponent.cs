@@ -1,3 +1,7 @@
+using System;
+using System.Drawing;
+using System.Numerics;
+
 namespace InfinitePenanceRL
 {
     public class EnemyComponent : Component
@@ -14,8 +18,11 @@ namespace InfinitePenanceRL
         private Vector2 _moveDirection = new Vector2(0, 0);
         private float _attackCooldown = 2.0f; // Кулдаун атаки в секундах
         private float _attackTimer = 0f;
-        private float _attackRange = 100f; // Радиус атаки (увеличен для теста)
+        private float _attackRange = 50f; // Радиус атаки
         private bool _hasCreatedDeathParticles = false; // Флаг для создания частиц смерти
+        private float _projectileCooldown = 3.0f; // Кулдаун снарядов в секундах
+        private float _projectileTimer = 0f;
+        private float _projectileRange = 400f; // Дальность стрельбы снарядами
 
         public EnemyComponent()
         {
@@ -70,11 +77,16 @@ namespace InfinitePenanceRL
                     Game.Sounds.PlayEnemyGrunt();
                 }
                 
-                // Проверяем прямую видимость (по горизонтали или вертикали, без стен)
-                bool straightLine = false;
-                if (Math.Abs(toPlayer.X) < 10 || Math.Abs(toPlayer.Y) < 10)
+                // Проверяем прямую видимость (по горизонтали, вертикали или диагонали, без стен)
+                bool straightLine = HasLineOfSight(Owner.Position, player.Position);
+
+                // Проверяем, можно ли запустить снаряд
+                _projectileTimer -= 1.0f / 60.0f;
+                if (straightLine && dist <= _projectileRange && dist > _attackRange && _projectileTimer <= 0)
                 {
-                    straightLine = true;
+                    LogThrottler.Log($"Условия для запуска снаряда выполнены: straightLine={straightLine}, dist={dist}, range={_projectileRange}", "projectile");
+                    _projectileTimer = _projectileCooldown;
+                    LaunchProjectile(player.Position);
                 }
 
                 LogThrottler.Log($"Враг проверяет атаку: расстояние до игрока = {dist}, радиус атаки = {_attackRange}", "enemy_attack");
@@ -133,6 +145,83 @@ namespace InfinitePenanceRL
                     }
                 }
             }
+        }
+
+        // Запускаем снаряд в игрока
+        private void LaunchProjectile(Vector2 targetPosition)
+        {
+            try
+            {
+                var direction = targetPosition - Owner.Position;
+                var projectile = new Entity();
+                projectile.Game = Owner.Game;
+                projectile.Position = Owner.Position;
+                
+                // Добавляем компоненты снаряда
+                projectile.AddComponent(new ProjectileComponent(direction, Owner.Position, (int)Attack * 2));
+                projectile.AddComponent(new ColliderComponent());
+                projectile.AddComponent(new RenderComponent());
+                
+                // Настраиваем RenderComponent
+                var render = projectile.GetComponent<RenderComponent>();
+                render.SpriteName = "projectiles_16px";
+                render.Size = new Size(16, 16);
+                render.Scale = 2.0f; // Увеличиваем размер для видимости
+                render.SpriteRegion = new Rectangle(0, 0, 16, 16); // Первый кадр снаряда
+                
+                // Вычисляем и устанавливаем поворот снаряда
+                float angle = (float)Math.Atan2(direction.Y, direction.X);
+                render.Rotation = angle;
+                
+                // Добавляем снаряд на сцену
+                Owner.Game.Projectiles.Add(projectile);
+                
+                LogThrottler.Log($"Враг запустил снаряд в игрока! Урон: {Attack * 2}, Позиция: {Owner.Position.X}, {Owner.Position.Y}", "projectile");
+            }
+            catch (Exception ex)
+            {
+                LogThrottler.Log($"Ошибка запуска снаряда: {ex.Message}", "projectile");
+            }
+        }
+
+        // Проверяем прямую видимость между двумя точками
+        public static bool HasLineOfSight(Vector2 from, Vector2 to, GameEngine game)
+        {
+            var scene = game.CurrentScene;
+            if (scene == null) return false;
+
+            // Определяем направление
+            Vector2 direction = to - from;
+            float distance = direction.Length();
+            
+            if (distance < 1) return true; // Очень близко
+            
+            direction = direction / distance; // Нормализуем
+            
+            // Проверяем каждые 16 пикселей на пути
+            float stepSize = 16.0f;
+            int steps = (int)(distance / stepSize) + 1;
+            
+            for (int i = 1; i < steps; i++) // Начинаем с 1, чтобы не проверять начальную точку
+            {
+                Vector2 checkPoint = from + direction * (i * stepSize);
+                int cellX = (int)(checkPoint.X / Scene.CellSize);
+                int cellY = (int)(checkPoint.Y / Scene.CellSize);
+                
+                // Если точка в стене, нет прямой видимости
+                if (!scene.IsWalkable(cellX, cellY))
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Проверяем прямую видимость между двумя точками (для использования внутри класса)
+        private bool HasLineOfSight(Vector2 from, Vector2 to)
+        {
+            return HasLineOfSight(from, to, Owner.Game);
         }
     }
 

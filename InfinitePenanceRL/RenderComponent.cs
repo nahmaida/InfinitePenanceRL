@@ -13,9 +13,17 @@ namespace InfinitePenanceRL
         public float Scale { get; set; } = 1.0f;
         public Rectangle? SpriteRegion { get; set; }
         public bool FlipHorizontal { get; set; } = false;
+        public float Rotation { get; set; } = 0.0f; // Поворот в радианах
         private const int TILE_SIZE = 16;
         private Vector2 _lastLoggedPosition;
         private bool _hasLoggedInitial;
+        
+        // Анимация
+        public bool IsAnimated { get; set; } = false;
+        public int CurrentFrame { get; set; } = 0;
+        public int FrameCount { get; set; } = 1;
+        public int FrameWidth { get; set; } = 16;
+        public int FrameHeight { get; set; } = 16;
 
         private void Log(string message)
         {
@@ -49,7 +57,26 @@ namespace InfinitePenanceRL
 
             if (!string.IsNullOrEmpty(SpriteName))
             {
-                if (FlipHorizontal)
+                if (Rotation != 0.0f)
+                {
+                    // Сохраняем текущую трансформацию
+                    var transform = g.Transform;
+                    
+                    // Настраиваем поворот вокруг центра спрайта
+                    float centerX = screenPos.X + (Size.Width * Scale) / 2;
+                    float centerY = screenPos.Y + (Size.Height * Scale) / 2;
+                    
+                    g.TranslateTransform(centerX, centerY);
+                    g.RotateTransform(Rotation * 180.0f / (float)Math.PI); // Конвертируем радианы в градусы
+                    g.TranslateTransform(-centerX, -centerY);
+                    
+                    // Рисуем спрайт
+                    Owner.Game.Sprites.DrawSprite(g, SpriteName, screenPos.X, screenPos.Y, Scale, SpriteRegion);
+                    
+                    // Возвращаем исходную трансформацию
+                    g.Transform = transform;
+                }
+                else if (FlipHorizontal)
                 {
                     // Сохраняем текущую трансформацию
                     var transform = g.Transform;

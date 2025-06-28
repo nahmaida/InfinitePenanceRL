@@ -31,6 +31,7 @@ namespace InfinitePenanceRL
                 _spritesheets["floors"] = new Bitmap("assets/roguelike_floors.png");
                 _spritesheets["ui"] = new Bitmap("assets/roguelike_ui.png");
                 _spritesheets["warrior"] = new Bitmap("assets/animations/warrior_48px.png");
+                _spritesheets["projectiles_16px"] = new Bitmap("assets/animations/projectiles_16px.png");
                 Log("Загрузили все спрайтшиты");
 
                 // Задаем регионы для всех спрайтов (размер 16x16)
@@ -115,8 +116,8 @@ namespace InfinitePenanceRL
                 {
                     Log($"ОШИБКА при отрисовке спрайта {spriteName}: {ex.Message}");
                     _loggedSprites.Add(spriteName);
+                }
             }
-        }
         }
 
         // Определяем, какой спрайтшит использовать для спрайта
@@ -130,6 +131,7 @@ namespace InfinitePenanceRL
                 "player" => "warrior",
                 "potion" or "sword" => "items",
                 "floor" => "floors",
+                "projectiles_16px" => "projectiles_16px",
                 _ => string.Empty
             };
         }
