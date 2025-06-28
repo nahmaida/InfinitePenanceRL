@@ -99,6 +99,15 @@ namespace InfinitePenanceRL
         // Обновление состояния игры
         public void Update()
         {
+            // проверяем, активна ли система прокачки
+            var levelingUI = UI.GetLevelingUI();
+            if (levelingUI != null && levelingUI.IsActive)
+            {
+                // если меню прокачки активно, обновляем только UI
+                UI.Update();
+                return;
+            }
+
             if (State != GameState.Playing) return;
 
             Physics.Update(CurrentScene);

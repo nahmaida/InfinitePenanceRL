@@ -132,7 +132,7 @@ namespace InfinitePenanceRL
                 Color = Color.White,
                 Size = new Size(16, 16),
                 SpriteName = "enemy", // Используем спрайт
-                Scale = 2.0f
+                Scale = 3.0f
             };
 
             var collider = new ColliderComponent();

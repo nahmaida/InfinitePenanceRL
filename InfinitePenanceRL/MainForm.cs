@@ -58,6 +58,15 @@ namespace InfinitePenanceRL
 
         private void MainForm_MouseDown(object sender, MouseEventArgs e)
         {
+            // проверяем систему прокачки
+            var levelingUI = _engine.UI.GetLevelingUI();
+            if (levelingUI != null && levelingUI.IsActive)
+            {
+                levelingUI.HandleMouseClick(e.X, e.Y, this.ClientSize);
+                Invalidate();
+                return;
+            }
+            
             var pauseMenu = _engine.UI.GetPauseMenu();
             // Если меню паузы активно, обрабатываем клик по кнопкам меню
             if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive)
@@ -133,6 +142,27 @@ namespace InfinitePenanceRL
 
         private void MainForm_MouseMove(object sender, MouseEventArgs e)
         {
+            // проверяем систему прокачки
+            var levelingUI = _engine.UI.GetLevelingUI();
+            if (levelingUI != null && levelingUI.IsActive)
+            {
+                levelingUI.HandleMouseMove(e.X, e.Y, this.ClientSize);
+                Invalidate();
+                return;
+            }
+            
+            // проверяем меню паузы
+            var pauseMenu = _engine.UI.GetPauseMenu();
+            if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive)
+            {
+                int width = 300, height = 300;
+                int x = (this.ClientSize.Width - width) / 2;
+                int y = (this.ClientSize.Height - height) / 2;
+                pauseMenu.HandleMouseMove(e.X, e.Y, x, y);
+                Invalidate();
+                return;
+            }
+            
             var inventory = _engine.UI.GetComponent<InventoryComponent>();
             if (inventory != null)
             {
@@ -180,6 +210,17 @@ namespace InfinitePenanceRL
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+            
+            // проверяем систему прокачки
+            var levelingUI = _engine.UI.GetLevelingUI();
+            if (levelingUI != null && levelingUI.IsActive)
+            {
+                levelingUI.HandleInput(e.KeyCode);
+                Invalidate();
+                e.Handled = true;
+                return;
+            }
+            
             var pauseMenu = _engine.UI.GetPauseMenu();
             if (_engine.State == GameState.Paused && pauseMenu != null && pauseMenu.IsActive)
             {

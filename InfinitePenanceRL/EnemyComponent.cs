@@ -44,6 +44,8 @@ namespace InfinitePenanceRL
             // Если здоровье упало до 0 или ниже — враг умирает
             if (Health <= 0)
             {
+                // добавляем опыт игроку за убийство
+                Player.AddKill();
                 Owner.MarkForDeletion();
             }
         }

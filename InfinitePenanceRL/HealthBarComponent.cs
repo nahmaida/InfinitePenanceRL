@@ -47,7 +47,7 @@ namespace InfinitePenanceRL
         {
             // Синхронизируем здоровье с Player.Health
             CurrentHealth = (int)Player.Health;
-            MaxHealth = 100; // Можно заменить на Player.MaxHealth если появится
+            MaxHealth = (int)Player.MaxHealth; // Используем Player.MaxHealth
 
             // Проверяем на проигрыш
             if (Player.Health <= 0 && !gameOverShown)

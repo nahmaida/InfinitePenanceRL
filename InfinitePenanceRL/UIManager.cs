@@ -39,13 +39,18 @@ namespace InfinitePenanceRL
             inventory.AddItem(new InventoryItem("Зелье", Color.Red) { Count = 3, SpriteName = "potion" });  // Три зелья лечения
             inventory.AddItem(new InventoryItem("Меч", Color.LightBlue) { SpriteName = "sword" });  // Один меч
 
+            // Система прокачки
+            var levelingUI = new LevelingUIComponent();
+
             // Привязываем компоненты к UI объекту
             _uiEntity.AddComponent(healthBar);
             _uiEntity.AddComponent(inventory);
+            _uiEntity.AddComponent(levelingUI);
 
             // Добавляем компоненты в список для отрисовки
             _uiComponents.Add(healthBar);
             _uiComponents.Add(inventory);
+            _uiComponents.Add(levelingUI);
 
             // Создаем меню паузы
             var pauseMenu = new PauseMenuComponent { ScreenPosition = new Vector2(0, 0), IsVisible = true };
@@ -63,6 +68,13 @@ namespace InfinitePenanceRL
                     component.Draw(g);
                 }
             }
+
+            // Рисуем систему прокачки отдельно, так как ей нужен размер viewport
+            var levelingUI = GetLevelingUI();
+            if (levelingUI != null)
+            {
+                levelingUI.Draw(g, _game.Camera.ViewportSize);
+            }
         }
 
         // Получить компонент интерфейса определённого типа
@@ -74,6 +86,11 @@ namespace InfinitePenanceRL
         public PauseMenuComponent GetPauseMenu()
         {
             return _uiComponents.OfType<PauseMenuComponent>().FirstOrDefault();
+        }
+
+        public LevelingUIComponent GetLevelingUI()
+        {
+            return _uiComponents.OfType<LevelingUIComponent>().FirstOrDefault();
         }
 
         // Обновление всех UI-компонентов
