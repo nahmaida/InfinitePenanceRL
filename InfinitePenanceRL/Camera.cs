@@ -7,6 +7,12 @@ namespace InfinitePenanceRL
     {
         public Vector2 Position { get; private set; }  // Позиция камеры в игровом мире
         public Size ViewportSize { get; private set; } // Размер видимой области (окна)
+        
+        // Эффект тряски экрана
+        private float _shakeIntensity = 0f;
+        private float _shakeDuration = 0f;
+        private float _shakeTimer = 0f;
+        private Vector2 _shakeOffset = Vector2.Zero;
 
         public Camera(Size viewportSize)
         {
@@ -14,12 +20,41 @@ namespace InfinitePenanceRL
             Position = Vector2.Zero;
         }
 
+        // Запускаем тряску экрана
+        public void Shake(float intensity, float duration)
+        {
+            _shakeIntensity = intensity;
+            _shakeDuration = duration;
+            _shakeTimer = duration;
+        }
+
+        // Обновляем тряску экрана
+        public void UpdateShake(float deltaTime)
+        {
+            if (_shakeTimer > 0)
+            {
+                _shakeTimer -= deltaTime;
+                
+                // Вычисляем случайное смещение для тряски
+                var random = new Random();
+                float offsetX = (float)(random.NextDouble() - 0.5) * _shakeIntensity * (_shakeTimer / _shakeDuration);
+                float offsetY = (float)(random.NextDouble() - 0.5) * _shakeIntensity * (_shakeTimer / _shakeDuration);
+                _shakeOffset = new Vector2(offsetX, offsetY);
+                
+                if (_shakeTimer <= 0)
+                {
+                    _shakeOffset = Vector2.Zero;
+                    _shakeIntensity = 0f;
+                }
+            }
+        }
+
         // Переводит координаты из игрового мира в координаты экрана
         public Vector2 WorldToScreen(Vector2 worldPosition)
         {
             return new Vector2(
-                worldPosition.X - Position.X + ViewportSize.Width / 2,
-                worldPosition.Y - Position.Y + ViewportSize.Height / 2
+                worldPosition.X - Position.X + ViewportSize.Width / 2 + _shakeOffset.X,
+                worldPosition.Y - Position.Y + ViewportSize.Height / 2 + _shakeOffset.Y
             );
         }
 
@@ -27,8 +62,8 @@ namespace InfinitePenanceRL
         public Vector2 ScreenToWorld(Point screenPosition)
         {
             return new Vector2(
-                screenPosition.X + Position.X - ViewportSize.Width / 2,
-                screenPosition.Y + Position.Y - ViewportSize.Height / 2
+                screenPosition.X + Position.X - ViewportSize.Width / 2 - _shakeOffset.X,
+                screenPosition.Y + Position.Y - ViewportSize.Height / 2 - _shakeOffset.Y
             );
         }
 

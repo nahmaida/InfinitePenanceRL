@@ -12,9 +12,10 @@ namespace InfinitePenanceRL
         private float _moveTimer = 0f;
         private float _moveInterval = 1.0f; // секунды
         private Vector2 _moveDirection = new Vector2(0, 0);
-        private float _attackCooldown = 1.0f; // Кулдаун атаки в секундах
+        private float _attackCooldown = 2.0f; // Кулдаун атаки в секундах
         private float _attackTimer = 0f;
-        private float _attackRange = 40f; // Радиус атаки (увеличен для теста)
+        private float _attackRange = 100f; // Радиус атаки (увеличен для теста)
+        private bool _hasCreatedDeathParticles = false; // Флаг для создания частиц смерти
 
         public EnemyComponent()
         {
@@ -36,7 +37,16 @@ namespace InfinitePenanceRL
 
         public override void Update()
         {
-            // LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
+            LogThrottler.Log("EnemyComponent.Update вызван", "enemy_debug");
+            
+            // Если враг только что умер — создаём кровь
+            if (IsDead && !_hasCreatedDeathParticles)
+            {
+                Game.Particles.CreateBloodSplatter(Owner.Position, 12);
+                _hasCreatedDeathParticles = true;
+                return;
+            }
+            
             if (IsDead) return;
 
             // Находим игрока
@@ -89,6 +99,9 @@ namespace InfinitePenanceRL
                         Player.Health -= Attack;
                         LogThrottler.Log($"Враг атакует игрока на {Attack} урона!", "enemy_attack");
                         LogThrottler.Log($"Текущее здоровье игрока: {Player.Health}", "enemy_attack");
+                        
+                        // Запускаем тряску экрана при получении урона
+                        Game.TriggerScreenShake();
                     }
                 }
                 else

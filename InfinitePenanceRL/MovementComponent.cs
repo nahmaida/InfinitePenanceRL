@@ -47,6 +47,15 @@ namespace InfinitePenanceRL
                 if (_render != null) _render.FlipHorizontal = false; // Возвращаем спрайт вправо
             }
 
+            // Если игрок двигается — создаём пыль
+            if (isMoving && Game.Particles != null)
+            {
+                Vector2 moveDirection = (newPosition - position).Normalize();
+                // Создаём пыль под ногами игрока (внизу по центру спрайта)
+                Vector2 dustPosition = position + new Vector2(16, 32); // 16 = половина ширины, 32 = полная высота
+                Game.Particles.CreateDust(dustPosition, moveDirection, 2);
+            }
+
             // Анимации движения (ходьба/бег)
             if (isMoving)
             {

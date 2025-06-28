@@ -20,6 +20,8 @@ namespace InfinitePenanceRL
         public Camera Camera { get; set; }  // Игровая камера
         public PhysicsSystem Physics { get; } = new PhysicsSystem();  // Физика и коллизии
         public Size WorldSize { get; set; }  // Размеры игрового мира
+        public ParticleSystem Particles { get; } = new ParticleSystem();  // Система частиц
+        public MusicManager Music { get; } = new MusicManager();  // Менеджер музыки
 
         private System.Windows.Forms.Timer gameTimer;  // Таймер для обновления игры
         private MainForm mainForm;  // Главное окно игры
@@ -74,6 +76,9 @@ namespace InfinitePenanceRL
 
             // Создаём новый лабиринт
             CurrentScene.GenerateMaze(MAZE_WIDTH, MAZE_HEIGHT);
+            
+            // Запускаем фоновую музыку
+            Music.StartMusic();
         }
 
         // Обновление состояния игры
@@ -104,6 +109,12 @@ namespace InfinitePenanceRL
                 Camera.CenterOn(player.Position, WorldSize);
             }
 
+            // Обновляем тряску камеры
+            Camera.UpdateShake(1.0f / TARGET_FPS);
+
+            // Обновляем систему частиц
+            Particles.Update(1.0f / TARGET_FPS);
+
             // Убираем мёртвые объекты
             CurrentScene.CleanupMarkedEntities();
 
@@ -118,6 +129,7 @@ namespace InfinitePenanceRL
             if (CurrentScene != null)
             {
                 RenderSystem.Render(graphics, this, CurrentScene.Entities);  // Рисуем игровые объекты
+                Particles.Draw(graphics, Camera);  // Рисуем частицы
                 UI.Draw(graphics);  // Рисуем интерфейс поверх всего
             }
         }
@@ -149,7 +161,9 @@ namespace InfinitePenanceRL
 
         public void ExitGame()
         {
-            Application.Exit();
+            State = GameState.Exiting;
+            Music.StopMusic(); // Останавливаем музыку при выходе
+            mainForm.Close();
         }
 
         public void SaveGameToFile(string filename)
@@ -185,6 +199,12 @@ namespace InfinitePenanceRL
                     player.Position = Player.Position;
                 }
             }
+        }
+
+        // Запускаем тряску экрана при получении урона
+        public void TriggerScreenShake()
+        {
+            Camera.Shake(10f, 0.3f); // Интенсивность 10 пикселей, длительность 0.3 секунды
         }
 
         public class FullSaveData
