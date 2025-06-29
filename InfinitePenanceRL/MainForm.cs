@@ -146,6 +146,27 @@ namespace InfinitePenanceRL
                 }
             }
             
+            // проверяем клики по дверям
+            if (e.Button == MouseButtons.Left && _engine.CurrentScene != null)
+            {
+                var worldPos = _engine.Camera.ScreenToWorld(e.Location);
+                
+                foreach (var entity in _engine.CurrentScene.Entities)
+                {
+                    var doorComponent = entity.GetComponent<DoorComponent>();
+                    if (doorComponent != null)
+                    {
+                        var collider = entity.GetComponent<ColliderComponent>();
+                        if (collider != null && collider.Bounds.Contains(worldPos.X, worldPos.Y))
+                        {
+                            doorComponent.Toggle();
+                            Invalidate();
+                            return;
+                        }
+                    }
+                }
+            }
+            
             _engine.Input.MouseDown(e.Button);
         }
 
@@ -182,6 +203,36 @@ namespace InfinitePenanceRL
             {
                 inventory.UpdateMousePosition(e.Location);
                 Invalidate(); // Перерисовываем форму для обновления подсказок
+            }
+            
+            // проверяем наведение на двери
+            if (_engine.CurrentScene != null)
+            {
+                var worldPos = _engine.Camera.ScreenToWorld(e.Location);
+                bool doorHovered = false;
+                
+                foreach (var entity in _engine.CurrentScene.Entities)
+                {
+                    var doorComponent = entity.GetComponent<DoorComponent>();
+                    if (doorComponent != null)
+                    {
+                        var collider = entity.GetComponent<ColliderComponent>();
+                        if (collider != null && collider.Bounds.Contains(worldPos.X, worldPos.Y))
+                        {
+                            doorComponent.IsHovered = true;
+                            doorHovered = true;
+                        }
+                        else
+                        {
+                            doorComponent.IsHovered = false;
+                        }
+                    }
+                }
+                
+                if (doorHovered)
+                {
+                    Invalidate();
+                }
             }
         }
 

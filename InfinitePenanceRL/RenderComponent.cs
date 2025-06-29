@@ -55,6 +55,10 @@ namespace InfinitePenanceRL
             //     _hasLoggedInitial = true;
             // }
 
+            // проверяем, нужно ли рисовать эффект наведения для двери
+            var doorComponent = Owner.GetComponent<DoorComponent>();
+            bool isDoorHovered = doorComponent?.IsHovered ?? false;
+
             if (!string.IsNullOrEmpty(SpriteName))
             {
                 if (Rotation != 0.0f)
@@ -95,6 +99,18 @@ namespace InfinitePenanceRL
                 {
                     Owner.Game.Sprites.DrawSprite(g, SpriteName, screenPos.X, screenPos.Y, Scale, SpriteRegion);
                 }
+                
+                // рисуем эффект наведения для двери
+                if (isDoorHovered)
+                {
+                    // подсвечиваем только по размеру спрайта (16x16), а не по коллайдеру
+                    float highlightWidth = 16 * Scale;
+                    float highlightHeight = 16 * Scale;
+                    using (var pen = new Pen(Color.Yellow, 3.0f))
+                    {
+                        g.DrawRectangle(pen, screenPos.X, screenPos.Y, highlightWidth, highlightHeight);
+                    }
+                }
             }
             else
             {
@@ -107,6 +123,18 @@ namespace InfinitePenanceRL
                 using (var brush = new SolidBrush(Color))
                 {
                     g.FillRectangle(brush, screenPos.X, screenPos.Y, Size.Width, Size.Height);
+                }
+                
+                // рисуем эффект наведения для двери
+                if (isDoorHovered)
+                {
+                    // подсвечиваем только по размеру спрайта (16x16), а не по коллайдеру
+                    float highlightWidth = 16 * Scale;
+                    float highlightHeight = 16 * Scale;
+                    using (var pen = new Pen(Color.Yellow, 3.0f))
+                    {
+                        g.DrawRectangle(pen, screenPos.X, screenPos.Y, highlightWidth, highlightHeight);
+                    }
                 }
             }
         }

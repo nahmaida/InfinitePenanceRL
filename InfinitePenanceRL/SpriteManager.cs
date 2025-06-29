@@ -11,7 +11,7 @@ namespace InfinitePenanceRL
         private readonly Dictionary<string, Rectangle> _spriteRegions = new Dictionary<string, Rectangle>();
         private const int TILE_SIZE = 16;
         private HashSet<string> _loggedSprites = new HashSet<string>();
-        
+
         private void Log(string message)
         {
             using (StreamWriter writer = File.AppendText("game.log"))
@@ -30,6 +30,7 @@ namespace InfinitePenanceRL
                 _spritesheets["walls"] = new Bitmap("assets/roguelike_walls.png");
                 _spritesheets["floors"] = new Bitmap("assets/roguelike_floors.png");
                 _spritesheets["ui"] = new Bitmap("assets/roguelike_ui.png");
+                _spritesheets["mapobjects"] = new Bitmap("assets/roguelike_mapobjects.png");
                 _spritesheets["warrior"] = new Bitmap("assets/animations/warrior_48px.png");
                 _spritesheets["projectiles_16px"] = new Bitmap("assets/animations/projectiles_16px.png");
                 _spritesheets["ghoul"] = new Bitmap("assets/animations/ghoul_48px.png");
@@ -58,6 +59,10 @@ namespace InfinitePenanceRL
                 _spriteRegions["wall_diagonal_tr"] = GetTileRect(5, 2, "walls");  // Диагональ сверху-справа
                 _spriteRegions["wall_diagonal_bl"] = GetTileRect(6, 1, "walls");  // Диагональ снизу-слева
                 _spriteRegions["wall_diagonal_br"] = GetTileRect(5, 1, "walls");  // Диагональ снизу-справа
+                
+                // Двери
+                _spriteRegions["door_open"] = GetTileRect(6, 3, "mapobjects");   // открытая дверь
+                _spriteRegions["door_closed"] = GetTileRect(4, 3, "mapobjects"); // закрытая дверь
                 
                 // Пол
                 _spriteRegions["floor"] = GetTileRect(0, 1, "floors");
@@ -117,8 +122,8 @@ namespace InfinitePenanceRL
                 {
                     Log($"ОШИБКА при отрисовке спрайта {spriteName}: {ex.Message}");
                     _loggedSprites.Add(spriteName);
-                }
             }
+        }
         }
 
         // Определяем, какой спрайтшит использовать для спрайта
@@ -126,6 +131,8 @@ namespace InfinitePenanceRL
         {
             if (spriteName.StartsWith("wall_"))
                 return "walls";
+            if (spriteName.StartsWith("door_"))
+                return "mapobjects";
                 
             return spriteName switch
             {

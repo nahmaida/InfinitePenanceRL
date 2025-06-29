@@ -109,6 +109,35 @@ namespace InfinitePenanceRL
             return CreateWall(game, WallType.Middle);
         }
 
+        public static Entity CreateDoor(GameEngine game, bool isOpen = false)
+        {
+            var door = new Entity { Game = game };
+
+            // Настраиваем рендер двери
+            var render = new RenderComponent
+            {
+                Color = Color.White,
+                Size = new Size(48, 48), // увеличиваем размер до 48x48
+                SpriteName = isOpen ? "door_open" : "door_closed",
+                Scale = 3.0f // увеличиваем до 48x48
+            };
+
+            // Добавляем коллайдер - закрытые двери непроходимы
+            var collider = new ColliderComponent
+            {
+                IsSolid = !isOpen
+            };
+
+            // Добавляем компонент двери для интерактивности
+            var doorComponent = new DoorComponent(isOpen);
+
+            door.AddComponent(render);
+            door.AddComponent(collider);
+            door.AddComponent(doorComponent);
+
+            return door;
+        }
+
         public static Entity CreateEnemy(GameEngine game)
         {
             LogThrottler.Log("Создаем врага", "enemy_creation");

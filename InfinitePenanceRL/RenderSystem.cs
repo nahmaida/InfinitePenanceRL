@@ -28,19 +28,19 @@ namespace InfinitePenanceRL
                     var screenPos = entity.Game.Camera.WorldToScreen(entity.Position);
                     render.Draw(g);
 
-                //     // Для отладки: рисуем границы коллайдеров белым цветом
-                //     var collider = entity.GetComponent<ColliderComponent>();
-                //     if (collider != null)
-                //     {
-                //         var colliderScreen = new RectangleF(
-                //             screenPos.X,
-                //             screenPos.Y,
-                //             collider.Bounds.Width,
-                //             collider.Bounds.Height);
-                //         g.DrawRectangle(Pens.White,
-                //             colliderScreen.X, colliderScreen.Y,
-                //             colliderScreen.Width, colliderScreen.Height);
-                //     }
+                    // // Для отладки: рисуем границы коллайдеров белым цветом
+                    // var collider = entity.GetComponent<ColliderComponent>();
+                    // if (collider != null)
+                    // {
+                    //     var colliderScreen = new RectangleF(
+                    //         screenPos.X,
+                    //         screenPos.Y,
+                    //         collider.Bounds.Width,
+                    //         collider.Bounds.Height);
+                    //     g.DrawRectangle(Pens.White,
+                    //         colliderScreen.X, colliderScreen.Y,
+                    //         colliderScreen.Width, colliderScreen.Height);
+                    // }
                 }
             }
 

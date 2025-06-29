@@ -10,7 +10,7 @@ namespace InfinitePenanceRL
     {
         public List<Entity> Entities { get; } = new List<Entity>();
         private readonly GameEngine _game;
-        private bool[,] _mazeLayout;
+        private TileType[,] _mazeLayout;
         private readonly MazeGenerator _mazeGenerator;
         public const int CellSize = 96;  // Размер одной клетки лабиринта в пикселях
         public const int WallSize = 48;  // Размер куска стены (половина клетки)
@@ -33,7 +33,7 @@ namespace InfinitePenanceRL
         {
             if (x < 0 || y < 0 || x >= _mazeLayout.GetLength(0) || y >= _mazeLayout.GetLength(1))
                 return true; // За пределами карты всё - стены
-            return !_mazeLayout[x, y];
+            return _mazeLayout[x, y] == TileType.Wall;
         }
 
         // Проверяем, можно ли тут ходить
@@ -41,7 +41,7 @@ namespace InfinitePenanceRL
         {
             if (x < 0 || y < 0 || x >= _mazeLayout.GetLength(0) || y >= _mazeLayout.GetLength(1))
                 return false; // За пределами карты ходить нельзя
-            return _mazeLayout[x, y];
+            return _mazeLayout[x, y] == TileType.Floor || _mazeLayout[x, y] == TileType.OpenDoor;
         }
 
         // Определяем тип стены на основе соседних клеток
@@ -49,22 +49,22 @@ namespace InfinitePenanceRL
         private WallType DetermineWallType(int x, int y, bool isTopHalf, bool isLeftHalf)
         {
             // Проверяем наличие стен с каждой стороны
-            bool hasWallN = y > 0 && !_mazeLayout[x, y - 1];
-            bool hasWallS = y < _mazeLayout.GetLength(1) - 1 && !_mazeLayout[x, y + 1];
-            bool hasWallW = x > 0 && !_mazeLayout[x - 1, y];
-            bool hasWallE = x < _mazeLayout.GetLength(0) - 1 && !_mazeLayout[x + 1, y];
+            bool hasWallN = y > 0 && _mazeLayout[x, y - 1] == TileType.Wall;
+            bool hasWallS = y < _mazeLayout.GetLength(1) - 1 && _mazeLayout[x, y + 1] == TileType.Wall;
+            bool hasWallW = x > 0 && _mazeLayout[x - 1, y] == TileType.Wall;
+            bool hasWallE = x < _mazeLayout.GetLength(0) - 1 && _mazeLayout[x + 1, y] == TileType.Wall;
 
-            // Проверяем наличие проходов с каждой стороны
-            bool hasPathN = y > 0 && _mazeLayout[x, y - 1];
-            bool hasPathS = y < _mazeLayout.GetLength(1) - 1 && _mazeLayout[x, y + 1];
-            bool hasPathW = x > 0 && _mazeLayout[x - 1, y];
-            bool hasPathE = x < _mazeLayout.GetLength(0) - 1 && _mazeLayout[x + 1, y];
+            // Проверяем наличие проходов с каждой стороны (включая двери)
+            bool hasPathN = y > 0 && (_mazeLayout[x, y - 1] == TileType.Floor || _mazeLayout[x, y - 1] == TileType.OpenDoor || _mazeLayout[x, y - 1] == TileType.ClosedDoor);
+            bool hasPathS = y < _mazeLayout.GetLength(1) - 1 && (_mazeLayout[x, y + 1] == TileType.Floor || _mazeLayout[x, y + 1] == TileType.OpenDoor || _mazeLayout[x, y + 1] == TileType.ClosedDoor);
+            bool hasPathW = x > 0 && (_mazeLayout[x - 1, y] == TileType.Floor || _mazeLayout[x - 1, y] == TileType.OpenDoor || _mazeLayout[x - 1, y] == TileType.ClosedDoor);
+            bool hasPathE = x < _mazeLayout.GetLength(0) - 1 && (_mazeLayout[x + 1, y] == TileType.Floor || _mazeLayout[x + 1, y] == TileType.OpenDoor || _mazeLayout[x + 1, y] == TileType.ClosedDoor);
 
-            // Проверяем диагональные проходы
-            bool hasPathNW = x > 0 && y > 0 && _mazeLayout[x - 1, y - 1];
-            bool hasPathNE = x < _mazeLayout.GetLength(0) - 1 && y > 0 && _mazeLayout[x + 1, y - 1];
-            bool hasPathSW = x > 0 && y < _mazeLayout.GetLength(1) - 1 && _mazeLayout[x - 1, y + 1];
-            bool hasPathSE = x < _mazeLayout.GetLength(0) - 1 && y < _mazeLayout.GetLength(1) - 1 && _mazeLayout[x + 1, y + 1];
+            // Проверяем диагональные проходы (включая двери)
+            bool hasPathNW = x > 0 && y > 0 && (_mazeLayout[x - 1, y - 1] == TileType.Floor || _mazeLayout[x - 1, y - 1] == TileType.OpenDoor || _mazeLayout[x - 1, y - 1] == TileType.ClosedDoor);
+            bool hasPathNE = x < _mazeLayout.GetLength(0) - 1 && y > 0 && (_mazeLayout[x + 1, y - 1] == TileType.Floor || _mazeLayout[x + 1, y - 1] == TileType.OpenDoor || _mazeLayout[x + 1, y - 1] == TileType.ClosedDoor);
+            bool hasPathSW = x > 0 && y < _mazeLayout.GetLength(1) - 1 && (_mazeLayout[x - 1, y + 1] == TileType.Floor || _mazeLayout[x - 1, y + 1] == TileType.OpenDoor || _mazeLayout[x - 1, y + 1] == TileType.ClosedDoor);
+            bool hasPathSE = x < _mazeLayout.GetLength(0) - 1 && y < _mazeLayout.GetLength(1) - 1 && (_mazeLayout[x + 1, y + 1] == TileType.Floor || _mazeLayout[x + 1, y + 1] == TileType.OpenDoor || _mazeLayout[x + 1, y + 1] == TileType.ClosedDoor);
 
             if (isTopHalf)
             {
@@ -126,7 +126,7 @@ namespace InfinitePenanceRL
             }
         }
 
-        // Создаём все сущности для лабиринта: стены и игрока
+        // Создаём все сущности для лабиринта: стены, двери и игрока
         private void CreateMazeEntities()
         {
             Entities.Clear();
@@ -136,7 +136,9 @@ namespace InfinitePenanceRL
             {
                 for (int y = 0; y < _mazeLayout.GetLength(1); y++)
                 {
-                    if (!_mazeLayout[x, y])
+                    var tileType = _mazeLayout[x, y];
+                    
+                    if (tileType == TileType.Wall)
                     {
                         // Каждая клетка-стена состоит из 4 кусочков (2x2)
                         for (int quadX = 0; quadX < 2; quadX++)
@@ -152,6 +154,41 @@ namespace InfinitePenanceRL
                                 wall.GetComponent<RenderComponent>().Size = new Size(WallSize, WallSize);
                                 AddEntity(wall);
                             }
+                        }
+                    }
+                    else if (tileType == TileType.ClosedDoor || tileType == TileType.OpenDoor)
+                    {
+                        // Проверяем горизонтальный проход
+                        bool isOpen = tileType == TileType.OpenDoor;
+                        if (x + 1 < _mazeLayout.GetLength(0) && _mazeLayout[x + 1, y] == tileType)
+                        {
+                            // Горизонтальный проход шириной 2 клетки
+                            var door1 = EntityFactory.CreateDoor(_game, isOpen);
+                            door1.Position = new Vector2(x * CellSize, y * CellSize);
+                            AddEntity(door1);
+                            var door2 = EntityFactory.CreateDoor(_game, isOpen);
+                            door2.Position = new Vector2((x + 1) * CellSize, y * CellSize);
+                            AddEntity(door2);
+                            _mazeLayout[x + 1, y] = TileType.Floor; // чтобы не спавнить дверь повторно
+                            x++; // пропускаем вторую клетку
+                        }
+                        else if (y + 1 < _mazeLayout.GetLength(1) && _mazeLayout[x, y + 1] == tileType)
+                        {
+                            // Вертикальный проход шириной 2 клетки
+                            var door1 = EntityFactory.CreateDoor(_game, isOpen);
+                            door1.Position = new Vector2(x * CellSize, y * CellSize);
+                            AddEntity(door1);
+                            var door2 = EntityFactory.CreateDoor(_game, isOpen);
+                            door2.Position = new Vector2(x * CellSize, (y + 1) * CellSize);
+                            AddEntity(door2);
+                            // y++ не нужен, внешний цикл
+                        }
+                        else
+                        {
+                            // Одиночная дверь (на всякий случай)
+                            var door = EntityFactory.CreateDoor(_game, isOpen);
+                            door.Position = new Vector2(x * CellSize, y * CellSize);
+                            AddEntity(door);
                         }
                     }
                 }
@@ -226,7 +263,7 @@ namespace InfinitePenanceRL
             {
                 for (int y = 0; y < _mazeLayout.GetLength(1); y++)
                 {
-                    if (_mazeLayout[x, y]) // Если клетка проходима
+                    if (_mazeLayout[x, y] == TileType.Floor || _mazeLayout[x, y] == TileType.OpenDoor) // Если клетка проходима
                     {
                         walkableCells.Add(new Point(x, y));
                     }
@@ -265,30 +302,30 @@ namespace InfinitePenanceRL
 
         public class MazeSaveData
         {
-            public bool[][] MazeLayout { get; set; } // теперь это массив массивов
+            public TileType[][] MazeLayout { get; set; } // теперь это массив массивов TileType
         }
 
-        // Преобразуем bool[,] в bool[][]
-        private static bool[][] ToJaggedArray(bool[,] array)
+        // Преобразуем TileType[,] в TileType[][]
+        private static TileType[][] ToJaggedArray(TileType[,] array)
         {
             int rows = array.GetLength(0);
             int cols = array.GetLength(1);
-            var jagged = new bool[rows][];
+            var jagged = new TileType[rows][];
             for (int i = 0; i < rows; i++)
             {
-                jagged[i] = new bool[cols];
+                jagged[i] = new TileType[cols];
                 for (int j = 0; j < cols; j++)
                     jagged[i][j] = array[i, j];
             }
             return jagged;
         }
 
-        // Преобразуем bool[][] обратно в bool[,]
-        private static bool[,] To2DArray(bool[][] jagged)
+        // Преобразуем TileType[][] обратно в TileType[,]
+        private static TileType[,] To2DArray(TileType[][] jagged)
         {
             int rows = jagged.Length;
             int cols = jagged[0].Length;
-            var array = new bool[rows, cols];
+            var array = new TileType[rows, cols];
             for (int i = 0; i < rows; i++)
                 for (int j = 0; j < cols; j++)
                     array[i, j] = jagged[i][j];

@@ -5,19 +5,21 @@ using System.Linq;
 
 namespace InfinitePenanceRL
 {
+    public enum TileType
+    {
+        Wall = 0,
+        Floor = 1,
+        ClosedDoor = 2,
+        OpenDoor = 3
+    }
+
     public class MazeGenerator
     {
-        private bool[,] _maze;
+        private TileType[,] _maze;
         private Random _random = new Random();
         private Point _startPosition;
+        private List<Point> _doors = new List<Point>(); // список позиций дверей
 
-        // константы для типов тайлов
-        private const int TILE_FLOOR = 0;
-        private const int TILE_SOLID = 1;
-        private const int TILE_WALL = 2;
-        private const int TILE_H_DOOR = 3;
-        private const int TILE_V_DOOR = 4;
-        
         // константы для регионов
         private const int CELL_SOLID = 0;
         private const int CELL_MERGED = -1;
@@ -35,15 +37,16 @@ namespace InfinitePenanceRL
         private List<Rectangle> _rooms = new List<Rectangle>();
 
         // Генерация подземелья с комнатами и лабиринтами
-        public bool[,] GenerateMaze(int width, int height)
+        public TileType[,] GenerateMaze(int width, int height)
         {
             // убеждаемся что размеры нечетные
             if (width % 2 == 0) width++;
             if (height % 2 == 0) height++;
             
-            _maze = new bool[width, height];
+            _maze = new TileType[width, height];
             _regions = new int[width, height];
             _rooms.Clear();
+            _doors.Clear();
             _currentRegion = -1;
             
             // заполняем стенами
@@ -69,13 +72,6 @@ namespace InfinitePenanceRL
             // убираем тупики
             RemoveDeadEnds();
             
-            // проверяем связность (для отладки)
-            bool isConnected = CheckConnectivity();
-            if (!isConnected)
-            {
-                Console.WriteLine("ВНИМАНИЕ: Найдены несвязные регионы в подземелье!");
-            }
-            
             // устанавливаем стартовую позицию в первой комнате
             if (_rooms.Count > 0)
             {
@@ -99,7 +95,7 @@ namespace InfinitePenanceRL
             {
                 for (int y = 0; y < _maze.GetLength(1); y++)
                 {
-                    _maze[x, y] = false; // false = стена
+                    _maze[x, y] = TileType.Wall; // стена
                     _regions[x, y] = -1; // инициализируем регионы как -1 (как null в Dart)
                 }
             }
@@ -134,12 +130,11 @@ namespace InfinitePenanceRL
                 Rectangle room = new Rectangle(x, y, width, height);
                 
                 // проверяем пересечения с существующими комнатами (как в оригинале)
-                // distanceTo <= 0 означает что комнаты перекрываются (distance < 0) или касаются (distance = 0)
+                // distanceTo <= 0 означает что комнаты могут касаться но не пересекаться
                 bool overlaps = false;
                 foreach (var other in _rooms)
                 {
-                    // проверяем что комнаты не перекрываются
-                    // комнаты могут касаться (иметь общую границу) но не перекрываться
+                    // проверяем что комнаты не пересекаются (но могут касаться)
                     if (room.X < other.X + other.Width && room.X + room.Width > other.X &&
                         room.Y < other.Y + other.Height && room.Y + room.Height > other.Y)
                     {
@@ -275,7 +270,6 @@ namespace InfinitePenanceRL
                 var sources = regions.Skip(1).ToList();
                 
                 // объединяем все затронутые регионы
-                // смотрим на ВСЕ регионы потому что другие регионы могли быть ранее объединены
                 for (int i = 0; i <= _currentRegion; i++)
                 {
                     if (sources.Contains(merged[i]))
@@ -310,11 +304,65 @@ namespace InfinitePenanceRL
                     return true;
                 });
             }
+            
+            // если остались несоединенные регионы, принудительно соединяем их
+            if (openRegions.Count > 1)
+            {
+                // находим любые оставшиеся коннекторы которые соединяют разные регионы
+                for (int x = 1; x < _maze.GetLength(0) - 1; x++)
+                {
+                    for (int y = 1; y < _maze.GetLength(1) - 1; y++)
+                    {
+                        Point pos = new Point(x, y);
+                        if (!IsWall(pos)) continue;
+                        
+                        HashSet<int> regions = new HashSet<int>();
+                        Point[] directions = { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
+                        
+                        foreach (Point dir in directions)
+                        {
+                            Point checkPos = new Point(pos.X + dir.X, pos.Y + dir.Y);
+                            if (IsInBounds(checkPos))
+                            {
+                                int region = _regions[checkPos.X, checkPos.Y];
+                                if (region != -1) regions.Add(region);
+                            }
+                        }
+                        
+                        // ищем коннекторы которые соединяют разные регионы
+                        if (regions.Count >= 2)
+                        {
+                            AddJunction(pos);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         
         private void AddJunction(Point pos)
         {
-            _maze[pos.X, pos.Y] = true;
+            if (_random.Next(4) == 0)
+            {
+                // дверь или пол
+                if (_random.Next(3) == 0)
+                {
+                    // открытая дверь
+                    _maze[pos.X, pos.Y] = TileType.OpenDoor;
+                    _doors.Add(pos);
+                }
+                else
+                {
+                    // пол
+                    _maze[pos.X, pos.Y] = TileType.Floor;
+                }
+            }
+            else
+            {
+                // закрытая дверь
+                _maze[pos.X, pos.Y] = TileType.ClosedDoor;
+                _doors.Add(pos);
+            }
         }
         
         private void RemoveDeadEnds()
@@ -346,69 +394,11 @@ namespace InfinitePenanceRL
                         if (exits != 1) continue;
                         
                         done = false;
-                        _maze[pos.X, pos.Y] = false; // замуровываем тупик
+                        _maze[pos.X, pos.Y] = TileType.Wall; // замуровываем тупик
                     }
                 }
             }
         }
-
-        private void RemoveIsolatedWalls()
-        {
-            int width = _maze.GetLength(0);
-            int height = _maze.GetLength(1);
-            bool[,] visited = new bool[width, height];
-            Queue<Point> queue = new Queue<Point>();
-
-            // Start from border walls
-            for (int x = 0; x < width; x++)
-            {
-                EnqueueIfWall(new Point(x, 0), visited, queue);
-                EnqueueIfWall(new Point(x, height - 1), visited, queue);
-            }
-            for (int y = 1; y < height - 1; y++)
-            {
-                EnqueueIfWall(new Point(0, y), visited, queue);
-                EnqueueIfWall(new Point(width - 1, y), visited, queue);
-            }
-
-            // BFS to mark connected walls
-            while (queue.Count > 0)
-            {
-                Point pos = queue.Dequeue();
-                Point[] directions = { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
-                foreach (Point dir in directions)
-                {
-                    Point next = new Point(pos.X + dir.X, pos.Y + dir.Y);
-                    if (IsInBounds(next) && !visited[next.X, next.Y] && IsWall(next))
-                    {
-                        visited[next.X, next.Y] = true;
-                        queue.Enqueue(next);
-                    }
-                }
-            }
-
-            // Remove isolated walls
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    if (IsWall(new Point(x, y)) && !visited[x, y])
-                    {
-                        _maze[x, y] = true; // Convert to floor
-                    }
-                }
-            }
-        }
-
-        private void EnqueueIfWall(Point pos, bool[,] visited, Queue<Point> queue)
-        {
-            if (IsInBounds(pos) && IsWall(pos))
-            {
-                visited[pos.X, pos.Y] = true;
-                queue.Enqueue(pos);
-            }
-        }
-
         
         private bool CanCarve(Point pos, Point direction)
         {
@@ -428,14 +418,14 @@ namespace InfinitePenanceRL
         
         private void Carve(Point pos)
         {
-            _maze[pos.X, pos.Y] = true; // true = пол
+            _maze[pos.X, pos.Y] = TileType.Floor; // пол
             _regions[pos.X, pos.Y] = _currentRegion;
         }
         
         private bool IsWall(Point pos)
         {
             if (!IsInBounds(pos)) return true;
-            return !_maze[pos.X, pos.Y];
+            return _maze[pos.X, pos.Y] == TileType.Wall;
         }
         
         private bool IsInBounds(Point pos)
@@ -445,90 +435,13 @@ namespace InfinitePenanceRL
 
         public Point GetStartPosition() => _startPosition;
 
-        public bool IsWalkable(bool[,] maze, int x, int y)
+        public bool IsWalkable(TileType[,] maze, int x, int y)
         {
             if (x < 0 || y < 0 || x >= maze.GetLength(0) || y >= maze.GetLength(1))
                 return false;
-            return maze[x, y];
+            return maze[x, y] == TileType.Floor || maze[x, y] == TileType.OpenDoor;
         }
-        
-        // метод для отладки - проверяет связность всех регионов
-        public bool CheckConnectivity()
-        {
-            var connectedRegions = new HashSet<int>();
-            var allRegions = new HashSet<int>();
-            
-            // находим все регионы
-            for (int x = 0; x < _maze.GetLength(0); x++)
-            {
-                for (int y = 0; y < _maze.GetLength(1); y++)
-                {
-                    if (!IsWall(new Point(x, y)))
-                    {
-                        int region = _regions[x, y];
-                        if (region != -1)
-                        {
-                            allRegions.Add(region);
-                        }
-                    }
-                }
-            }
-            
-            // находим связные регионы через flood fill
-            if (allRegions.Count > 0)
-            {
-                var startRegion = allRegions.First();
-                FloodFillRegions(startRegion, connectedRegions);
-            }
-            
-            bool isConnected = connectedRegions.Count == allRegions.Count;
-            
-            if (!isConnected)
-            {
-                Console.WriteLine($"Отладочная информация: найдено {allRegions.Count} регионов, связно {connectedRegions.Count}");
-                var disconnected = allRegions.Except(connectedRegions).ToList();
-                Console.WriteLine($"Несвязные регионы: {string.Join(", ", disconnected)}");
-            }
-            
-            return isConnected;
-        }
-        
-        private void FloodFillRegions(int startRegion, HashSet<int> connectedRegions)
-        {
-            var queue = new Queue<int>();
-            queue.Enqueue(startRegion);
-            connectedRegions.Add(startRegion);
-            
-            while (queue.Count > 0)
-            {
-                int currentRegion = queue.Dequeue();
-                
-                // ищем все точки этого региона и их соседей
-                for (int x = 0; x < _maze.GetLength(0); x++)
-                {
-                    for (int y = 0; y < _maze.GetLength(1); y++)
-                    {
-                        if (!IsWall(new Point(x, y)) && _regions[x, y] == currentRegion)
-                        {
-                            // проверяем соседей
-                            Point[] directions = { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
-                            foreach (Point dir in directions)
-                            {
-                                Point neighbor = new Point(x + dir.X, y + dir.Y);
-                                if (IsInBounds(neighbor) && !IsWall(neighbor))
-                                {
-                                    int neighborRegion = _regions[neighbor.X, neighbor.Y];
-                                    if (neighborRegion != -1 && !connectedRegions.Contains(neighborRegion))
-                                    {
-                                        connectedRegions.Add(neighborRegion);
-                                        queue.Enqueue(neighborRegion);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
+        public List<Point> GetDoors() => _doors;
     }
 } 
